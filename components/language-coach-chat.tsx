@@ -36,7 +36,9 @@ export function LanguageCoachChat() {
   const { selectedScenario, targetLanguage, setTargetLanguage } = useScenarioStore();
 
   // Use Vercel AI SDK's useChat hook
+  // ID changes with language to maintain separate conversations per language
   const { messages, sendMessage, status } = useChat({
+    id: `coach-${targetLanguage}-${selectedScenario?.id || 'free'}`,
     transport: new DefaultChatTransport({
       api: '/api/ollama',
       body: {
@@ -52,6 +54,11 @@ export function LanguageCoachChat() {
 
   // Derived loading state
   const isLoading = status === 'streaming' || status === 'submitted';
+
+  // Reset message count when language changes
+  useEffect(() => {
+    lastMessageCountRef.current = 0;
+  }, [targetLanguage, selectedScenario]);
 
   // TTS: Speak assistant messages when they finish streaming
   useEffect(() => {
