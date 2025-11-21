@@ -1,6 +1,6 @@
 /**
  * Whisper client for speech-to-text transcription
- * Note: This uses a simple approach that works with whisper.cpp command-line tool
+ * Supports whisper.cpp CLI (whisper-cli)
  */
 
 import { exec } from 'child_process';
@@ -30,6 +30,13 @@ export class WhisperClient {
   }
 
   /**
+   * Detect if using whisper.cpp (whisper-cli) or OpenAI whisper
+   */
+  private isWhisperCpp(): boolean {
+    return this.executable.includes('whisper-cli');
+  }
+
+  /**
    * Transcribe audio buffer to text
    */
   async transcribe(audioBuffer: Buffer): Promise<TranscriptionResult> {
@@ -39,23 +46,39 @@ export class WhisperClient {
       // Write buffer to temporary file
       await writeFile(tempFile, audioBuffer);
 
-      // Execute whisper command
-      // Note: Adjust command based on your whisper installation
-      // For whisper.cpp: whisper -m model.bin -f input.wav
-      // For OpenAI whisper: whisper input.wav --model small
-      const command = `${this.executable} "${tempFile}" --model ${this.model} --output_format txt --output_dir ${os.tmpdir()}`;
+      let command: string;
+      let text: string;
 
-      const { stdout, stderr } = await execAsync(command, {
-        timeout: 30000, // 30 second timeout
-      });
+      if (this.isWhisperCpp()) {
+        // whisper.cpp CLI outputs directly to stdout
+        command = `${this.executable} -m "${this.model}" -nt "${tempFile}"`;
 
-      // Read the output file
-      const outputFile = tempFile.replace('.wav', '.txt');
-      const fs = await import('fs/promises');
-      const text = await fs.readFile(outputFile, 'utf-8');
+        const { stdout, stderr } = await execAsync(command, {
+          timeout: 30000, // 30 second timeout
+          maxBuffer: 10 * 1024 * 1024, // 10MB buffer
+        });
 
-      // Clean up temp files
-      await this.cleanup(tempFile, outputFile);
+        // whisper-cli outputs transcription to stdout
+        text = stdout.trim();
+
+        // Clean up temp file
+        await this.cleanup(tempFile);
+      } else {
+        // OpenAI whisper Python CLI
+        command = `${this.executable} "${tempFile}" --model ${this.model} --output_format txt --output_dir ${os.tmpdir()}`;
+
+        await execAsync(command, {
+          timeout: 30000,
+        });
+
+        // Read the output file
+        const outputFile = tempFile.replace('.wav', '.txt');
+        const fs = await import('fs/promises');
+        text = await fs.readFile(outputFile, 'utf-8');
+
+        // Clean up temp files
+        await this.cleanup(tempFile, outputFile);
+      }
 
       return {
         text: text.trim(),
@@ -85,10 +108,18 @@ export class WhisperClient {
    */
   async healthCheck(): Promise<boolean> {
     try {
-      const { stdout } = await execAsync(`${this.executable} --version`, {
-        timeout: 5000,
-      });
-      return true;
+      if (this.isWhisperCpp()) {
+        // whisper-cli --help returns 0
+        const { stdout } = await execAsync(`${this.executable} -h`, {
+          timeout: 5000,
+        });
+        return stdout.includes('usage');
+      } else {
+        const { stdout } = await execAsync(`${this.executable} --version`, {
+          timeout: 5000,
+        });
+        return true;
+      }
     } catch (error) {
       console.error('Whisper health check failed:', error);
       return false;

@@ -35,9 +35,10 @@ export function VoiceRecorder({ onTranscription, onError, disabled }: VoiceRecor
       streamRef.current = stream;
 
       // Create recorder
+      // Use WAV format for compatibility with whisper-cli
       const recorder = new RecordRTCClass(stream, {
         type: 'audio',
-        mimeType: 'audio/webm',
+        mimeType: 'audio/wav',
         recorderType: RecordRTCClass.StereoAudioRecorder,
         numberOfAudioChannels: 1,
         desiredSampRate: 16000,
@@ -85,7 +86,7 @@ export function VoiceRecorder({ onTranscription, onError, disabled }: VoiceRecor
         try {
           // Send to transcription API
           const formData = new FormData();
-          formData.append('audio', blob, 'recording.webm');
+          formData.append('audio', blob, 'recording.wav');
 
           const response = await fetch('/api/transcribe', {
             method: 'POST',

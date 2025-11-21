@@ -13,7 +13,13 @@ export async function middleware(request: NextRequest) {
     return new Response("pong", { status: 200 });
   }
 
-  if (pathname.startsWith("/api/auth")) {
+  // Allow access to auth and language coach API routes without authentication
+  if (
+    pathname.startsWith("/api/auth") ||
+    pathname.startsWith("/api/transcribe") ||
+    pathname.startsWith("/api/ollama") ||
+    pathname.startsWith("/api/feedback")
+  ) {
     return NextResponse.next();
   }
 
