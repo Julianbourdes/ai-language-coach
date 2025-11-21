@@ -4,12 +4,13 @@ Ce document guide les développeurs IA (et humains) travaillant sur le projet AI
 
 ## Vue d'ensemble du projet
 
-**AI Language Coach** est une application de coaching linguistique pour aider les francophones à pratiquer l'anglais oral. L'application utilise l'IA locale (Ollama + Whisper) pour garantir la confidentialité totale des utilisateurs.
+**AI Language Coach** est une application de coaching linguistique multilingue pour pratiquer l'anglais, le français ou l'espagnol à l'oral. L'application utilise l'IA locale (Ollama + Whisper) pour garantir la confidentialité totale des utilisateurs.
 
 ### Philosophie du projet
 
 - **Local-first**: Tout fonctionne en local, aucune donnée n'est envoyée à des serveurs externes
 - **Privacy-first**: Les conversations restent sur la machine de l'utilisateur
+- **Multilingual**: Support complet pour EN/FR/ES avec feedback adapté à chaque langue
 - **Encouraging**: L'IA est toujours encourageante, jamais condescendante
 - **Progressive**: Focus sur 2-3 corrections principales plutôt que surcharger l'utilisateur
 
@@ -34,6 +35,7 @@ Backend/AI:
 Audio:
 - RecordRTC pour la capture audio
 - Web Audio API
+- Web Speech API pour TTS (avec sélection intelligente des voix)
 ```
 
 ### Structure du projet
@@ -201,21 +203,35 @@ export const useMyStore = create<MyState>()(
 
 **Fichier:** `lib/ollama/prompts.ts`
 
-**Prompts disponibles:**
+**Prompts disponibles (tous sont maintenant des fonctions dynamiques):**
 
-1. **`languageCoachPrompt`** - Conversation générale
+1. **`languageCoachPrompt(targetLanguage)`** - Conversation générale
+   - Accepte 'en', 'fr', ou 'es'
+   - Génère prompt adapté à la langue cible
    - Doit rester encourageant et naturel
    - Ne PAS corriger directement dans la conversation
    - L'analyse se fait séparément
 
-2. **`feedbackAnalyzerPrompt`** - Analyse pour corrections
+2. **`feedbackAnalyzerPrompt(targetLanguage)`** - Analyse pour corrections
+   - Adapte l'analyse à la langue cible
+   - Explications dans la langue native de l'utilisateur
    - Doit retourner du JSON valide
    - Format strict pour parsing
    - Prioriser les erreurs importantes
 
-3. **`generateRolePlayPrompt(scenario)`** - Génère prompt selon scénario
+3. **`generateRolePlayPrompt(scenario, targetLanguage)`** - Génère prompt selon scénario
    - Combine `languageCoachPrompt` + instructions du scénario
    - Maintient le contexte du rôle
+   - Adapté à la langue cible
+
+**Exemple de mapping langue:**
+```typescript
+const LANGUAGE_NAMES: Record<string, { learningName: string; nativeName: string }> = {
+  en: { learningName: 'English', nativeName: 'French' },
+  fr: { learningName: 'French', nativeName: 'English' },
+  es: { learningName: 'Spanish', nativeName: 'English' },
+};
+```
 
 **⚠️ Important:** Les prompts affectent directement la qualité de l'expérience. Tester minutieusement après modification.
 
@@ -282,6 +298,8 @@ Ce composant orchestre:
 - `HighlightText` - Affichage avec feedback
 - `FeedbackPanel` - Récapitulatif
 - `useChat` hook - Streaming AI
+- TTS - Synthèse vocale des réponses
+- Language selector - Sélecteur de langue
 
 **Pattern de données:**
 
@@ -292,19 +310,86 @@ Ce composant orchestre:
   content: 'texte transcrit ou tapé'
 }
 
-// Récupérer feedback
+// Récupérer feedback avec langue cible
 const response = await fetch('/api/feedback', {
   method: 'POST',
-  body: JSON.stringify({ text: userMessage })
+  body: JSON.stringify({
+    text: userMessage,
+    targetLanguage: targetLanguage  // 'en', 'fr', ou 'es'
+  })
 });
 
 // Stocker feedback pour affichage
 setCurrentFeedback({
-  messageId: message.id,
+  messageText: userMessage,  // Utiliser le texte au lieu de l'ID
   feedback: data.corrections,
   score: data.overallScore
 });
 ```
+
+### Support multilingue
+
+Le système supporte trois langues : anglais, français, espagnol.
+
+**État de la langue** (`lib/store/scenario-store.ts`):
+```typescript
+export type Language = 'en' | 'fr' | 'es';
+
+const LANGUAGES: Record<Language, { name: string; flag: string; voiceLang: string }> = {
+  en: { name: 'English', flag: '🇬🇧', voiceLang: 'en-US' },
+  fr: { name: 'Français', flag: '🇫🇷', voiceLang: 'fr-FR' },
+  es: { name: 'Español', flag: '🇪🇸', voiceLang: 'es-ES' },
+};
+```
+
+**Prompts dynamiques** (`lib/ollama/prompts.ts`):
+- `languageCoachPrompt(targetLanguage)` - Génère le prompt pour la langue cible
+- `feedbackAnalyzerPrompt(targetLanguage)` - Adapte l'analyse à la langue
+- `generateRolePlayPrompt(scenario, targetLanguage)` - Combine scénario et langue
+
+**Hook useChat avec ID dynamique**:
+```typescript
+// ID change avec la langue pour conversations séparées
+const { messages, sendMessage, status } = useChat({
+  id: `coach-${targetLanguage}-${selectedScenario?.id || 'free'}`,
+  transport: new DefaultChatTransport({
+    api: '/api/ollama',
+    body: {
+      scenario: selectedScenario,
+      targetLanguage: targetLanguage
+    },
+  }),
+});
+```
+
+### Text-to-Speech (TTS)
+
+**Sélection intelligente des voix** (`components/language-coach-chat.tsx:63-91`):
+```typescript
+const selectBestVoice = (langCode: string) => {
+  const voices = window.speechSynthesis.getVoices();
+  const langVoices = voices.filter(v => v.lang.startsWith(langCode));
+
+  // Priorité: Premium > Local > Default
+  const premiumKeywords = ['premium', 'enhanced', 'neural', 'natural'];
+  const premiumVoice = langVoices.find(v =>
+    premiumKeywords.some(k => v.name.toLowerCase().includes(k))
+  );
+
+  return premiumVoice || langVoices.find(v => v.localService) || langVoices[0];
+};
+```
+
+**Utilisation**:
+```typescript
+const utterance = new SpeechSynthesisUtterance(text);
+utterance.lang = LANGUAGES[targetLanguage].voiceLang;
+utterance.voice = selectBestVoice(langCode.split('-')[0]);
+utterance.rate = 0.95;  // Légèrement ralenti pour clarté
+window.speechSynthesis.speak(utterance);
+```
+
+**Pour voix de meilleure qualité**: Voir `docs/TTS-UPGRADE.md`
 
 ## API Routes
 
@@ -330,16 +415,18 @@ setCurrentFeedback({
   "messages": [
     { "role": "user", "content": "Hello" }
   ],
-  "scenario": { /* Scenario object */ }
+  "scenario": { /* Scenario object */ },
+  "targetLanguage": "en"  // 'en', 'fr', ou 'es'
 }
 ```
 
-**Output:** Stream de texte via `toDataStreamResponse()`
+**Output:** Stream de texte via `toUIMessageStreamResponse()`
 
 **Configuration:**
 - Temperature: 0.7 (équilibre créativité/cohérence)
-- MaxTokens: 1000 (performance)
+- MaxTokens: Non spécifié (laissé au modèle)
 - Contexte: 10 derniers messages max
+- Prompt système adapté à la langue cible
 
 ### POST /api/feedback
 
@@ -348,7 +435,8 @@ setCurrentFeedback({
 {
   "text": "texte à analyser",
   "context": "scenario title (optionnel)",
-  "userLevel": "intermediate"
+  "userLevel": "intermediate",
+  "targetLanguage": "en"  // 'en', 'fr', ou 'es'
 }
 ```
 
@@ -372,6 +460,8 @@ setCurrentFeedback({
   "summary": "Good! A few improvements suggested."
 }
 ```
+
+**Note:** Les explications sont fournies dans la langue native de l'utilisateur (définie par la langue cible).
 
 ## Patterns importants
 
@@ -720,13 +810,39 @@ export const languageModel = ollamaProvider(modelName, {
 RecordRTC.prototype.debug = true; // Active les logs internes
 ```
 
+## Nouvelles fonctionnalités (2024)
+
+### Support multilingue (EN/FR/ES)
+- Sélecteur de langue dans l'interface
+- Prompts dynamiques adaptés à chaque langue
+- Conversations séparées par langue
+- Feedback adapté à la langue cible
+
+### Text-to-Speech
+- Synthèse vocale des réponses de l'IA
+- Sélection automatique des meilleures voix
+- Support vocal pour les 3 langues
+- Toggle pour activer/désactiver
+
+### Amélioration UX
+- Modal de sélection de scénarios
+- Panel de feedback fixe à droite
+- Transcription affichée pour révision avant envoi
+- Feedback tracking amélioré (par texte au lieu d'ID)
+
+## Documentation additionnelle
+
+- **TTS-UPGRADE.md** - Guide pour améliorer la qualité des voix TTS
+- **SETUP-DB.md** - Configuration PostgreSQL et Redis
+
 ## Conclusion
 
 Ce projet privilégie:
 - 🔒 **Privacy** - Tout local, rien ne quitte la machine
+- 🌍 **Multilingue** - Support natif EN/FR/ES
 - 💪 **Encouragement** - Feedback constructif, jamais décourageant
 - 🎯 **Focus** - 2-3 corrections importantes plutôt que tout
-- ⚡ **Performance** - Optimisé pour M1 Pro 16GB
+- ⚡ **Performance** - Optimisé pour machines modernes
 
 Avant toute modification majeure, considérer l'impact sur ces principes fondamentaux.
 

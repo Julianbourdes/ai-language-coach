@@ -1,11 +1,13 @@
 # AI Language Coach
 
-An AI-powered language learning application that helps French speakers practice English conversation with real-time feedback and role-play scenarios.
+An AI-powered language learning application that helps you practice conversation in multiple languages with real-time feedback and role-play scenarios.
 
 ## Features
 
-- 🎤 **Voice Recording**: Practice speaking English with automatic speech-to-text transcription
+- 🎤 **Voice Recording**: Practice speaking with automatic speech-to-text transcription (Whisper)
 - 💬 **AI Conversation**: Chat with a supportive AI language coach powered by Ollama
+- 🌍 **Multi-Language Support**: Practice English, French, or Spanish
+- 🔊 **Text-to-Speech**: Listen to AI responses with natural voice synthesis
 - ✨ **Real-time Feedback**: Get instant corrections on grammar, vocabulary, and style with highlighted text
 - 🎭 **Role-Play Scenarios**: Practice specific situations like job interviews, business presentations, and casual conversations
 - 📊 **Progress Tracking**: Monitor your improvement with scores and statistics
@@ -114,15 +116,34 @@ Open [http://localhost:3000/coach](http://localhost:3000/coach) in your browser.
 ### Starting a Conversation
 
 1. **Free Conversation**: Go to `/coach` for free-form conversation
-2. **Scenario Practice**: Go to `/scenarios` to choose a role-play scenario
+2. **Scenario Practice**: Click "Scenarios" button to choose a role-play scenario
+
+### Selecting Your Target Language
+
+Click the language selector (🌍) in the top right corner to choose:
+- 🇬🇧 **English** - Practice English
+- 🇫🇷 **Français** - Practice French
+- 🇪🇸 **Español** - Practice Spanish
+
+The AI will respond in your selected language and provide feedback tailored to that language.
 
 ### Using Voice Input
 
-1. Click the microphone button
+1. Click the microphone button (🎤)
 2. Allow microphone access when prompted
-3. Speak in English
+3. Speak in your target language
 4. Click stop when finished
-5. Your speech will be transcribed and analyzed
+5. Review the transcription in the input field
+6. Press send to submit your message
+
+### Text-to-Speech
+
+Click the volume button (🔊) to enable/disable text-to-speech:
+- When enabled: AI responses are automatically spoken aloud
+- The voice automatically adapts to your selected language
+- Uses the best available voice on your system
+
+See [TTS-UPGRADE.md](./docs/TTS-UPGRADE.md) for instructions on installing higher-quality voices.
 
 ### Understanding Feedback
 
@@ -132,7 +153,7 @@ Messages are automatically analyzed with issues highlighted:
 - 🟡 **Yellow (Warning)**: Correct but not idiomatic
 - 🔵 **Blue (Suggestion)**: Style improvements
 
-Click highlighted text to see detailed explanations.
+Click highlighted text to see detailed explanations. The feedback panel on the right shows your overall score and all corrections.
 
 ## Available Scenarios
 
