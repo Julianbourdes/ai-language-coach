@@ -4,7 +4,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { generateText } from 'ai';
-import { languageModel } from '@/lib/ollama/client';
+import { getLanguageModel } from '@/lib/ollama/client';
 import { feedbackAnalyzerPrompt } from '@/lib/ollama/prompts';
 import { nanoid } from 'nanoid';
 import type { FeedbackRequest, FeedbackResponse, Feedback } from '@/types';
@@ -48,10 +48,10 @@ Return ONLY a valid JSON array of corrections. If there are no corrections neede
 
     // Generate feedback
     const result = await generateText({
-      model: languageModel,
+      model: getLanguageModel(),
       prompt: analysisPrompt,
       temperature: 0.3, // Lower temperature for more consistent JSON
-      maxTokens: 1500,
+      maxOutputTokens: 1500,
     });
 
     let corrections: Feedback[] = [];

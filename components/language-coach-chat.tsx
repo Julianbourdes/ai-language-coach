@@ -5,8 +5,9 @@
  * Integrates voice recording, AI chat, and feedback highlighting
  */
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useChat } from '@ai-sdk/react';
+import { DefaultChatTransport } from 'ai';
 import { useRouter } from 'next/navigation';
 import { VoiceRecorder } from './voice/voice-recorder';
 import { HighlightText } from './feedback/highlight-text';
@@ -32,16 +33,21 @@ export function LanguageCoachChat() {
   const { selectedScenario } = useScenarioStore();
 
   // Use Vercel AI SDK's useChat hook
-  const { messages, append, isLoading } = useChat({
-    api: '/api/ollama',
-    body: {
-      scenario: selectedScenario,
-    },
+  const { messages, sendMessage, status } = useChat({
+    transport: new DefaultChatTransport({
+      api: '/api/ollama',
+      body: {
+        scenario: selectedScenario,
+      },
+    }),
     onError: (error) => {
       console.error('Chat error:', error);
       toast.error('Failed to send message. Please ensure Ollama is running.');
     },
   });
+
+  // Derived loading state
+  const isLoading = status === 'streaming' || status === 'submitted';
 
   // Handle voice transcription
   const handleVoiceTranscription = async (transcription: string, audioUrl?: string) => {
@@ -51,10 +57,7 @@ export function LanguageCoachChat() {
     }
 
     // Add user message
-    await append({
-      role: 'user',
-      content: transcription,
-    });
+    sendMessage({ text: transcription });
 
     // Request feedback for the transcription
     await requestFeedback(transcription);
@@ -70,10 +73,7 @@ export function LanguageCoachChat() {
     setInput('');
 
     // Add user message
-    await append({
-      role: 'user',
-      content: userMessage,
-    });
+    sendMessage({ text: userMessage });
 
     // Request feedback
     await requestFeedback(userMessage);
@@ -158,28 +158,36 @@ export function LanguageCoachChat() {
             </div>
           )}
 
-          {messages.map((message, index) => (
-            <div
-              key={message.id}
-              className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
+          {messages.map((message) => {
+            // Extract text content from message parts
+            const textContent = message.parts
+              ?.map((part: any) => part.type === 'text' && part.text)
+              .filter(Boolean)
+              .join('') || '';
+
+            return (
               <div
-                className={`max-w-[80%] rounded-lg p-4 ${
-                  message.role === 'user'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-gray-100 dark:bg-gray-800'
-                }`}
+                key={message.id}
+                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
-                {message.role === 'user' &&
-                currentFeedback?.messageId === message.id &&
-                currentFeedback.feedback.length > 0 ? (
-                  <HighlightText text={message.content} feedback={currentFeedback.feedback} />
-                ) : (
-                  <p className="whitespace-pre-wrap">{message.content}</p>
-                )}
+                <div
+                  className={`max-w-[80%] rounded-lg p-4 ${
+                    message.role === 'user'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-gray-100 dark:bg-gray-800'
+                  }`}
+                >
+                  {message.role === 'user' &&
+                  currentFeedback?.messageId === message.id &&
+                  currentFeedback.feedback.length > 0 ? (
+                    <HighlightText text={textContent} feedback={currentFeedback.feedback} />
+                  ) : (
+                    <p className="whitespace-pre-wrap">{textContent}</p>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
 
           {isLoading && (
             <div className="flex justify-start">

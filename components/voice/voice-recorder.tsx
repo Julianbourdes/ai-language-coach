@@ -7,8 +7,8 @@
 import { useState, useRef, useCallback } from 'react';
 import { Mic, Square, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import RecordRTC from 'recordrtc';
 import { useConversationStore } from '@/lib/store/conversation-store';
+import type RecordRTC from 'recordrtc';
 
 interface VoiceRecorderProps {
   onTranscription: (transcription: string, audioUrl?: string) => void;
@@ -26,15 +26,19 @@ export function VoiceRecorder({ onTranscription, onError, disabled }: VoiceRecor
 
   const startRecording = useCallback(async () => {
     try {
+      // Dynamic import to avoid SSR issues with RecordRTC
+      const RecordRTCModule = await import('recordrtc');
+      const RecordRTCClass = RecordRTCModule.default;
+
       // Request microphone permission
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
 
       // Create recorder
-      const recorder = new RecordRTC(stream, {
+      const recorder = new RecordRTCClass(stream, {
         type: 'audio',
         mimeType: 'audio/webm',
-        recorderType: RecordRTC.StereoAudioRecorder,
+        recorderType: RecordRTCClass.StereoAudioRecorder,
         numberOfAudioChannels: 1,
         desiredSampRate: 16000,
       });

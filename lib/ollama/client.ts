@@ -2,23 +2,19 @@
  * Ollama client configuration using ollama-ai-provider-v2
  */
 
-import { createOllama } from 'ollama-ai-provider-v2';
+import { ollama } from 'ollama-ai-provider-v2';
 
 // Get configuration from environment
 const baseURL = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
 const modelName = process.env.OLLAMA_MODEL || 'llama3.1:8b';
 
 /**
- * Configured Ollama provider instance
+ * Get language model instance
+ * Simple direct usage as per ollama-ai-provider-v2 docs
  */
-const ollama = createOllama({
-  baseURL: baseURL,
-});
-
-/**
- * Default model for language coaching
- */
-export const languageModel = ollama(modelName);
+export function getLanguageModel() {
+  return ollama(modelName);
+}
 
 /**
  * Health check for Ollama service

@@ -3,12 +3,12 @@
  */
 
 import { NextRequest } from 'next/server';
-import { streamText } from 'ai';
-import { languageModel, checkOllamaHealth } from '@/lib/ollama/client';
+import { streamText, convertToModelMessages, type UIMessage } from 'ai';
+import { getLanguageModel, checkOllamaHealth } from '@/lib/ollama/client';
 import { languageCoachPrompt, generateRolePlayPrompt } from '@/lib/ollama/prompts';
 import type { Scenario } from '@/types';
 
-export const maxDuration = 60; // Set timeout to 60 seconds
+export const maxDuration = 60;
 
 /**
  * POST /api/ollama
@@ -17,7 +17,7 @@ export const maxDuration = 60; // Set timeout to 60 seconds
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { messages, scenario } = body;
+    const { messages, scenario }: { messages: UIMessage[]; scenario?: Scenario } = body;
 
     if (!messages || !Array.isArray(messages)) {
       return new Response(JSON.stringify({ error: 'Invalid messages format' }), {
@@ -29,25 +29,25 @@ export async function POST(request: NextRequest) {
     // Determine system prompt based on scenario
     let systemPrompt = languageCoachPrompt;
     if (scenario) {
-      systemPrompt = generateRolePlayPrompt(scenario as Scenario);
+      systemPrompt = generateRolePlayPrompt(scenario);
     }
 
+    // Convert UI messages to model messages
+    const modelMessages = convertToModelMessages(messages);
+
     // Limit context to last 10 messages for performance
-    const contextMessages = messages.slice(-10);
+    const contextMessages = modelMessages.slice(-10);
 
     // Stream the response
     const result = streamText({
-      model: languageModel,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        ...contextMessages,
-      ],
+      model: getLanguageModel(),
+      system: systemPrompt,
+      messages: contextMessages,
       temperature: 0.7,
-      maxTokens: 1000,
     });
 
-    // Return streaming response
-    return result.toDataStreamResponse();
+    // Return streaming response in UI format
+    return result.toUIMessageStreamResponse();
   } catch (error) {
     console.error('Ollama chat error:', error);
 
