@@ -26,7 +26,7 @@ Frontend:
 - shadcn/ui components
 
 Backend/AI:
-- Ollama (llama3.1:8b) via ollama-ai-provider
+- Ollama (llama3.1:8b) via ollama-ai-provider-v2
 - Vercel AI SDK pour le streaming
 - Whisper pour speech-to-text
 - Zustand pour le state management
@@ -662,12 +662,12 @@ Le projet est conçu pour fonctionner **localement uniquement**. Un déploiement
 
 ```json
 {
-  "next": "15.3.0-canary.31",      // App Router stable
-  "react": "19.0.0-rc",             // Concurrent features
-  "ai": "5.0.26",                   // Vercel AI SDK
-  "ollama-ai-provider": "1.2.0",   // Provider Ollama
-  "zustand": "5.0.8",               // State management
-  "recordrtc": "5.6.2"              // Audio recording
+  "next": "15.3.0-canary.31",         // App Router stable
+  "react": "19.0.0-rc",               // Concurrent features
+  "ai": "5.0.26",                     // Vercel AI SDK
+  "ollama-ai-provider-v2": "1.5.5",  // Provider Ollama (official)
+  "zustand": "5.0.8",                 // State management
+  "recordrtc": "5.6.2"                // Audio recording
 }
 ```
 
