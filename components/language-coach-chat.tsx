@@ -5,7 +5,7 @@
  * Integrates voice recording, AI chat, and feedback highlighting
  */
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import { VoiceRecorder } from './voice/voice-recorder';
@@ -14,23 +14,26 @@ import { FeedbackPanel } from './feedback/feedback-panel';
 import { ScenariosModal } from './scenarios/scenarios-modal';
 import { Button } from './ui/button';
 import { useConversationStore } from '@/lib/store/conversation-store';
-import { useScenarioStore } from '@/lib/store/scenario-store';
-import { Loader2, Send, List } from 'lucide-react';
+import { useScenarioStore, LANGUAGES, type Language } from '@/lib/store/scenario-store';
+import { Loader2, Send, List, Volume2, VolumeX, Globe } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Feedback } from '@/types';
 
 export function LanguageCoachChat() {
   const [input, setInput] = useState('');
   const [showScenarios, setShowScenarios] = useState(false);
+  const [ttsEnabled, setTtsEnabled] = useState(false);
   const [currentFeedback, setCurrentFeedback] = useState<{
     messageText: string;
     feedback: Feedback[];
     score: number;
   } | null>(null);
 
+  const lastMessageCountRef = useRef(0);
+
   const { currentConversation, addMessage, updateMessage, addFeedback, isProcessing } =
     useConversationStore();
-  const { selectedScenario } = useScenarioStore();
+  const { selectedScenario, targetLanguage, setTargetLanguage } = useScenarioStore();
 
   // Use Vercel AI SDK's useChat hook
   const { messages, sendMessage, status } = useChat({
@@ -38,6 +41,7 @@ export function LanguageCoachChat() {
       api: '/api/ollama',
       body: {
         scenario: selectedScenario,
+        targetLanguage: targetLanguage,
       },
     }),
     onError: (error) => {
@@ -48,6 +52,35 @@ export function LanguageCoachChat() {
 
   // Derived loading state
   const isLoading = status === 'streaming' || status === 'submitted';
+
+  // TTS: Speak assistant messages when they finish streaming
+  useEffect(() => {
+    if (!ttsEnabled || typeof window === 'undefined') return;
+
+    // Check if a new assistant message has been added and streaming is complete
+    const assistantMessages = messages.filter((m) => m.role === 'assistant');
+    const hasNewMessage = assistantMessages.length > lastMessageCountRef.current;
+    const streamingComplete = status !== 'streaming' && status !== 'submitted';
+
+    if (hasNewMessage && streamingComplete && assistantMessages.length > 0) {
+      const latestMessage = assistantMessages[assistantMessages.length - 1];
+      const textContent =
+        latestMessage.parts
+          ?.map((part: any) => part.type === 'text' && part.text)
+          .filter(Boolean)
+          .join('') || '';
+
+      if (textContent.trim()) {
+        // Use Web Speech API to speak the text
+        const utterance = new SpeechSynthesisUtterance(textContent);
+        utterance.lang = LANGUAGES[targetLanguage].voiceLang;
+        utterance.rate = 0.9; // Slightly slower for clarity
+        window.speechSynthesis.speak(utterance);
+      }
+
+      lastMessageCountRef.current = assistantMessages.length;
+    }
+  }, [messages, status, ttsEnabled, targetLanguage]);
 
   // Handle voice transcription
   const handleVoiceTranscription = async (transcription: string, audioUrl?: string) => {
@@ -130,14 +163,30 @@ export function LanguageCoachChat() {
                   </p>
                 )}
               </div>
-              <Button
-                variant="outline"
-                onClick={() => setShowScenarios(true)}
-                size="sm"
-              >
-                <List className="h-4 w-4 mr-2" />
-                Scenarios
-              </Button>
+              <div className="flex gap-2">
+                <div className="relative">
+                  <select
+                    value={targetLanguage}
+                    onChange={(e) => setTargetLanguage(e.target.value as Language)}
+                    className="appearance-none pl-9 pr-8 py-2 text-sm rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
+                  >
+                    {Object.entries(LANGUAGES).map(([code, lang]) => (
+                      <option key={code} value={code}>
+                        {lang.flag} {lang.name}
+                      </option>
+                    ))}
+                  </select>
+                  <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowScenarios(true)}
+                  size="sm"
+                >
+                  <List className="h-4 w-4 mr-2" />
+                  Scenarios
+                </Button>
+              </div>
             </div>
           </div>
 
@@ -216,6 +265,20 @@ export function LanguageCoachChat() {
                   onError={handleError}
                   disabled={isLoading}
                 />
+
+                <Button
+                  type="button"
+                  variant={ttsEnabled ? 'default' : 'outline'}
+                  size="icon"
+                  onClick={() => setTtsEnabled(!ttsEnabled)}
+                  title={ttsEnabled ? 'Disable text-to-speech' : 'Enable text-to-speech'}
+                >
+                  {ttsEnabled ? (
+                    <Volume2 className="h-4 w-4" />
+                  ) : (
+                    <VolumeX className="h-4 w-4" />
+                  )}
+                </Button>
 
                 <input
                   type="text"

@@ -4,27 +4,39 @@
 
 import type { Scenario } from '@/types';
 
+const LANGUAGE_NAMES: Record<string, { learningName: string; nativeName: string }> = {
+  en: { learningName: 'English', nativeName: 'French' },
+  fr: { learningName: 'French', nativeName: 'English' },
+  es: { learningName: 'Spanish', nativeName: 'English' },
+};
+
 /**
  * Base language coach prompt for general conversation
  */
-export const languageCoachPrompt = `You are an encouraging and constructive English language coach helping a French learner practice English conversation.
+export function languageCoachPrompt(targetLanguage: string = 'en'): string {
+  const { learningName, nativeName } =
+    LANGUAGE_NAMES[targetLanguage] || LANGUAGE_NAMES.en;
+
+  return `You are an encouraging and constructive ${learningName} language coach helping a ${nativeName} speaker practice ${learningName} conversation.
 
 Your role:
-- Engage in natural, flowing conversation
+- Engage in natural, flowing conversation IN ${learningName.toUpperCase()}
 - Be supportive and encouraging
-- Speak naturally and idiomatically
+- Speak naturally and idiomatically in ${learningName}
 - Adapt your language to the context
 - Ask follow-up questions to keep the conversation going
 - Focus on helping them practice speaking, not on correcting every mistake
 
 Important guidelines:
+- ALWAYS respond in ${learningName}, never in ${nativeName}
 - DO NOT point out errors directly in the conversation
 - DO NOT give grammar lessons unless asked
 - Keep the conversation natural and enjoyable
 - Errors will be highlighted separately by the feedback system
 - Your job is to be a conversation partner, not a teacher
 
-Remember: The goal is to build confidence and fluency through practice.`;
+Remember: The goal is to build confidence and fluency through practice in ${learningName}.`;
+}
 
 /**
  * Prompt for analyzing text and generating feedback
@@ -70,8 +82,13 @@ Example format:
 /**
  * Generate a role-play system prompt based on scenario
  */
-export function generateRolePlayPrompt(scenario: Scenario): string {
-  return `${languageCoachPrompt}
+export function generateRolePlayPrompt(
+  scenario: Scenario,
+  targetLanguage: string = 'en'
+): string {
+  const { learningName } = LANGUAGE_NAMES[targetLanguage] || LANGUAGE_NAMES.en;
+
+  return `${languageCoachPrompt(targetLanguage)}
 
 ROLE-PLAY SCENARIO:
 You are playing the role of: ${scenario.aiRole}
@@ -82,9 +99,9 @@ Your specific instructions:
 ${scenario.systemPrompt}
 
 Focus areas for this scenario:
-${scenario.focusAreas.map(area => `- ${area}`).join('\n')}
+${scenario.focusAreas.map((area) => `- ${area}`).join('\n')}
 
-Stay in character and create a realistic, engaging conversation that helps the learner practice English in this specific context.`;
+Stay in character and create a realistic, engaging conversation that helps the learner practice ${learningName} in this specific context.`;
 }
 
 /**

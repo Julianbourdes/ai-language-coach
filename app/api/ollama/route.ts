@@ -17,7 +17,11 @@ export const maxDuration = 60;
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { messages, scenario }: { messages: UIMessage[]; scenario?: Scenario } = body;
+    const {
+      messages,
+      scenario,
+      targetLanguage = 'en',
+    }: { messages: UIMessage[]; scenario?: Scenario; targetLanguage?: string } = body;
 
     if (!messages || !Array.isArray(messages)) {
       return new Response(JSON.stringify({ error: 'Invalid messages format' }), {
@@ -26,10 +30,10 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Determine system prompt based on scenario
-    let systemPrompt = languageCoachPrompt;
+    // Determine system prompt based on scenario and language
+    let systemPrompt = languageCoachPrompt(targetLanguage);
     if (scenario) {
-      systemPrompt = generateRolePlayPrompt(scenario);
+      systemPrompt = generateRolePlayPrompt(scenario, targetLanguage);
     }
 
     // Convert UI messages to model messages
