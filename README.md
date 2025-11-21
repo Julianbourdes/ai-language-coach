@@ -21,7 +21,14 @@ Before you begin, ensure you have the following installed:
    npm install -g pnpm
    ```
 
-2. **Ollama** (for local AI)
+2. **Docker** (for PostgreSQL database)
+   ```bash
+   # macOS: Download Docker Desktop from docker.com
+   # Linux: Install via package manager
+   # Windows: Download Docker Desktop from docker.com
+   ```
+
+3. **Ollama** (for local AI)
    ```bash
    # macOS
    brew install ollama
@@ -32,7 +39,7 @@ Before you begin, ensure you have the following installed:
    # Windows: Download from https://ollama.com/download
    ```
 
-3. **Whisper** (for speech-to-text)
+4. **Whisper** (for speech-to-text)
    ```bash
    # macOS
    brew install whisper-cpp
@@ -52,7 +59,19 @@ Before you begin, ensure you have the following installed:
 pnpm install
 ```
 
-### 2. Set Up Ollama
+### 2. Set Up PostgreSQL & Redis (Required for auth)
+
+```bash
+# Using Docker (recommended)
+docker compose up -d
+
+# Initialize database
+pnpm db:migrate
+```
+
+This will start both PostgreSQL (for user data) and Redis (for sessions). See [SETUP-DB.md](./SETUP-DB.md) for detailed instructions and alternatives.
+
+### 3. Set Up Ollama
 
 ```bash
 # Pull the language model (this may take a few minutes)
@@ -62,20 +81,27 @@ ollama pull llama3.1:8b
 ollama serve
 ```
 
-### 3. Configure Environment
+### 4. Configure Environment
 
 The `.env.local` file is already configured with defaults:
 
 ```
+# Database & Cache
+POSTGRES_URL=postgresql://languagecoach:local_dev_password@localhost:5432/languagecoach
+REDIS_URL=redis://localhost:6379
+
+# Ollama
 OLLAMA_BASE_URL=http://localhost:11434
 OLLAMA_MODEL=llama3.1:8b
+
+# Whisper
 WHISPER_MODEL=small
 WHISPER_EXECUTABLE_PATH=/usr/local/bin/whisper
 ```
 
 Update the `WHISPER_EXECUTABLE_PATH` if needed based on your installation.
 
-### 4. Run the Application
+### 5. Run the Application
 
 ```bash
 pnpm dev
@@ -117,6 +143,19 @@ Click highlighted text to see detailed explanations.
 5. **Explain Tech to Non-Technical** - Simplify complex concepts
 
 ## Troubleshooting
+
+### Database Connection Issues
+```bash
+# Check if containers are running
+docker compose ps
+
+# View logs
+docker compose logs postgres
+docker compose logs redis
+
+# Restart services
+docker compose restart
+```
 
 ### Ollama Not Responding
 ```bash
