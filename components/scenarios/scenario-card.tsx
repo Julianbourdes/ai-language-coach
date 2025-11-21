@@ -12,12 +12,24 @@ import type { Scenario } from '@/types';
 
 interface ScenarioCardProps {
   scenario: Scenario;
-  onSelect: (scenario: Scenario) => void;
+  isSelected?: boolean;
+  onClick?: () => void;
+  onSelect?: (scenario: Scenario) => void;
 }
 
-export function ScenarioCard({ scenario, onSelect }: ScenarioCardProps) {
+export function ScenarioCard({ scenario, isSelected, onClick, onSelect }: ScenarioCardProps) {
+  const handleClick = () => {
+    onClick?.();
+    onSelect?.(scenario);
+  };
+
   return (
-    <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer group">
+    <Card
+      className={`p-6 hover:shadow-lg transition-all cursor-pointer group ${
+        isSelected ? 'border-2 border-primary bg-primary/5' : ''
+      }`}
+      onClick={handleClick}
+    >
       <div className="space-y-4">
         {/* Header */}
         <div className="flex items-start justify-between">
@@ -61,13 +73,23 @@ export function ScenarioCard({ scenario, onSelect }: ScenarioCardProps) {
         </div>
 
         {/* Action */}
-        <Button
-          onClick={() => onSelect(scenario)}
-          className="w-full"
-          variant="default"
-        >
-          Start Practice
-        </Button>
+        {!isSelected && (
+          <Button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleClick();
+            }}
+            className="w-full"
+            variant="default"
+          >
+            Start Practice
+          </Button>
+        )}
+        {isSelected && (
+          <div className="text-center text-sm font-medium text-primary">
+            ✓ Currently Selected
+          </div>
+        )}
       </div>
     </Card>
   );

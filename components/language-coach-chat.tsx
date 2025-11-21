@@ -8,10 +8,10 @@
 import { useState } from 'react';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
-import { useRouter } from 'next/navigation';
 import { VoiceRecorder } from './voice/voice-recorder';
 import { HighlightText } from './feedback/highlight-text';
 import { FeedbackPanel } from './feedback/feedback-panel';
+import { ScenariosModal } from './scenarios/scenarios-modal';
 import { Button } from './ui/button';
 import { useConversationStore } from '@/lib/store/conversation-store';
 import { useScenarioStore } from '@/lib/store/scenario-store';
@@ -20,10 +20,10 @@ import { toast } from 'sonner';
 import type { Feedback } from '@/types';
 
 export function LanguageCoachChat() {
-  const router = useRouter();
   const [input, setInput] = useState('');
+  const [showScenarios, setShowScenarios] = useState(false);
   const [currentFeedback, setCurrentFeedback] = useState<{
-    messageId: string;
+    messageText: string;
     feedback: Feedback[];
     score: number;
   } | null>(null);
@@ -56,11 +56,9 @@ export function LanguageCoachChat() {
       return;
     }
 
-    // Add user message
-    sendMessage({ text: transcription });
-
-    // Request feedback for the transcription
-    await requestFeedback(transcription);
+    // Set transcription in input field for user review
+    setInput(transcription);
+    toast.success('Transcription complete. Review and press send.');
   };
 
   // Handle text input
@@ -101,7 +99,7 @@ export function LanguageCoachChat() {
       // Store feedback for display
       if (data.corrections && data.corrections.length > 0) {
         setCurrentFeedback({
-          messageId: messages[messages.length - 1]?.id || '',
+          messageText: text,
           feedback: data.corrections,
           score: data.overallScore,
         });
@@ -117,133 +115,151 @@ export function LanguageCoachChat() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-background">
-      {/* Header */}
-      <div className="border-b bg-white dark:bg-gray-900 p-4">
-        <div className="flex items-center justify-between max-w-4xl mx-auto">
-          <div>
-            <h1 className="text-xl font-semibold">AI Language Coach</h1>
-            {selectedScenario && (
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                {selectedScenario.icon} {selectedScenario.title}
-              </p>
-            )}
-          </div>
-          <Button
-            variant="outline"
-            onClick={() => router.push('/scenarios')}
-            size="sm"
-          >
-            <List className="h-4 w-4 mr-2" />
-            Scenarios
-          </Button>
-        </div>
-      </div>
-
-      {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4">
-        <div className="max-w-4xl mx-auto space-y-4">
-          {messages.length === 0 && (
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">👋</div>
-              <h2 className="text-2xl font-semibold mb-2">Welcome to AI Language Coach!</h2>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
-                {selectedScenario
-                  ? `You're practicing: ${selectedScenario.title}`
-                  : 'Start practicing your English conversation skills'}
-              </p>
-              <p className="text-sm text-gray-500 dark:text-gray-500">
-                Use the microphone to speak or type your message below
-              </p>
-            </div>
-          )}
-
-          {messages.map((message) => {
-            // Extract text content from message parts
-            const textContent = message.parts
-              ?.map((part: any) => part.type === 'text' && part.text)
-              .filter(Boolean)
-              .join('') || '';
-
-            return (
-              <div
-                key={message.id}
-                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+    <>
+      <div className="flex h-screen bg-background">
+        {/* Main Chat Area */}
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* Header */}
+          <div className="border-b bg-white dark:bg-gray-900 p-4 shrink-0">
+            <div className="flex items-center justify-between max-w-4xl mx-auto">
+              <div>
+                <h1 className="text-xl font-semibold">AI Language Coach</h1>
+                {selectedScenario && (
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {selectedScenario.icon} {selectedScenario.title}
+                  </p>
+                )}
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => setShowScenarios(true)}
+                size="sm"
               >
-                <div
-                  className={`max-w-[80%] rounded-lg p-4 ${
-                    message.role === 'user'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-gray-100 dark:bg-gray-800'
-                  }`}
-                >
-                  {message.role === 'user' &&
-                  currentFeedback?.messageId === message.id &&
-                  currentFeedback.feedback.length > 0 ? (
-                    <HighlightText text={textContent} feedback={currentFeedback.feedback} />
-                  ) : (
-                    <p className="whitespace-pre-wrap">{textContent}</p>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-
-          {isLoading && (
-            <div className="flex justify-start">
-              <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4">
-                <Loader2 className="h-5 w-5 animate-spin" />
-              </div>
+                <List className="h-4 w-4 mr-2" />
+                Scenarios
+              </Button>
             </div>
-          )}
-        </div>
-      </div>
+          </div>
 
-      {/* Feedback Panel (if there's feedback for the last user message) */}
-      {currentFeedback && currentFeedback.feedback.length > 0 && (
-        <div className="border-t bg-gray-50 dark:bg-gray-900 p-4">
-          <div className="max-w-4xl mx-auto">
-            <FeedbackPanel
-              feedback={currentFeedback.feedback}
-              overallScore={currentFeedback.score}
-            />
+          {/* Messages Area */}
+          <div className="flex-1 overflow-y-auto p-4">
+            <div className="max-w-4xl mx-auto space-y-4">
+              {messages.length === 0 && (
+                <div className="text-center py-12">
+                  <div className="text-6xl mb-4">👋</div>
+                  <h2 className="text-2xl font-semibold mb-2">Welcome to AI Language Coach!</h2>
+                  <p className="text-gray-600 dark:text-gray-400 mb-4">
+                    {selectedScenario
+                      ? `You're practicing: ${selectedScenario.title}`
+                      : 'Start practicing your English conversation skills'}
+                  </p>
+                  <p className="text-sm text-gray-500 dark:text-gray-500 mb-4">
+                    Use the microphone to speak or type your message below
+                  </p>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowScenarios(true)}
+                  >
+                    <List className="h-4 w-4 mr-2" />
+                    Choose a Scenario
+                  </Button>
+                </div>
+              )}
+
+              {messages.map((message) => {
+                // Extract text content from message parts
+                const textContent = message.parts
+                  ?.map((part: any) => part.type === 'text' && part.text)
+                  .filter(Boolean)
+                  .join('') || '';
+
+                return (
+                  <div
+                    key={message.id}
+                    className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div
+                      className={`max-w-[80%] rounded-lg p-4 ${
+                        message.role === 'user'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-gray-100 dark:bg-gray-800'
+                      }`}
+                    >
+                      {message.role === 'user' &&
+                      currentFeedback?.messageText === textContent &&
+                      currentFeedback.feedback.length > 0 ? (
+                        <HighlightText text={textContent} feedback={currentFeedback.feedback} />
+                      ) : (
+                        <p className="whitespace-pre-wrap">{textContent}</p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {isLoading && (
+                <div className="flex justify-start">
+                  <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Input Area */}
+          <div className="border-t bg-white dark:bg-gray-900 p-4 shrink-0">
+            <div className="max-w-4xl mx-auto">
+              <form onSubmit={handleSubmit} className="flex gap-2">
+                <VoiceRecorder
+                  onTranscription={handleVoiceTranscription}
+                  onError={handleError}
+                  disabled={isLoading}
+                />
+
+                <input
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="Type your message or use the microphone..."
+                  className="flex-1 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary"
+                  disabled={isLoading}
+                />
+
+                <Button type="submit" disabled={!input.trim() || isLoading} size="icon">
+                  {isLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                </Button>
+              </form>
+
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
+                Speak naturally and get instant feedback on your English
+              </p>
+            </div>
           </div>
         </div>
-      )}
 
-      {/* Input Area */}
-      <div className="border-t bg-white dark:bg-gray-900 p-4">
-        <div className="max-w-4xl mx-auto">
-          <form onSubmit={handleSubmit} className="flex gap-2">
-            <VoiceRecorder
-              onTranscription={handleVoiceTranscription}
-              onError={handleError}
-              disabled={isLoading}
-            />
-
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Type your message or use the microphone..."
-              className="flex-1 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary"
-              disabled={isLoading}
-            />
-
-            <Button type="submit" disabled={!input.trim() || isLoading} size="icon">
-              {isLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Send className="h-4 w-4" />
-              )}
-            </Button>
-          </form>
-
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
-            Speak naturally and get instant feedback on your English
-          </p>
-        </div>
+        {/* Right Sidebar - Feedback Panel */}
+        {currentFeedback && currentFeedback.feedback.length > 0 && (
+          <div className="w-96 border-l bg-gray-50 dark:bg-gray-900 overflow-y-auto shrink-0">
+            <div className="p-4">
+              <FeedbackPanel
+                feedback={currentFeedback.feedback}
+                overallScore={currentFeedback.score}
+              />
+            </div>
+          </div>
+        )}
       </div>
-    </div>
+
+      {/* Scenarios Modal */}
+      <ScenariosModal
+        isOpen={showScenarios}
+        onClose={() => setShowScenarios(false)}
+      />
+    </>
   );
 }
