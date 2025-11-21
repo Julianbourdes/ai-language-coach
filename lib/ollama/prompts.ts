@@ -41,9 +41,13 @@ Remember: The goal is to build confidence and fluency through practice in ${lear
 /**
  * Prompt for analyzing text and generating feedback
  */
-export const feedbackAnalyzerPrompt = `You are an expert English language instructor analyzing text from a French learner.
+export function feedbackAnalyzerPrompt(targetLanguage: string = 'en'): string {
+  const { learningName, nativeName } =
+    LANGUAGE_NAMES[targetLanguage] || LANGUAGE_NAMES.en;
 
-Your task is to identify errors and areas for improvement, returning a JSON array of corrections.
+  return `You are an expert ${learningName} language instructor analyzing text from a ${nativeName} speaker learning ${learningName}.
+
+Your task is to identify errors and areas for improvement in their ${learningName} text, returning a JSON array of corrections.
 
 Focus on:
 1. Grammar errors (verb tenses, subject-verb agreement, articles, etc.)
@@ -60,7 +64,7 @@ For each correction, provide:
 - severity: "error" | "warning" | "suggestion"
 - original: the problematic text
 - suggestion: the corrected version
-- explanation: why this is better (in simple, friendly language)
+- explanation: why this is better (in simple, friendly language, explain in ${nativeName})
 - startIndex: character position where the issue starts
 - endIndex: character position where the issue ends
 
@@ -71,13 +75,14 @@ Example format:
   {
     "type": "grammar",
     "severity": "error",
-    "original": "I go to cinema yesterday",
-    "suggestion": "I went to the cinema yesterday",
-    "explanation": "Use past tense 'went' for actions that happened yesterday, and 'the' before cinema",
+    "original": "incorrect phrase",
+    "suggestion": "corrected phrase",
+    "explanation": "Brief explanation of why this is better",
     "startIndex": 0,
-    "endIndex": 24
+    "endIndex": 16
   }
 ]`;
+}
 
 /**
  * Generate a role-play system prompt based on scenario

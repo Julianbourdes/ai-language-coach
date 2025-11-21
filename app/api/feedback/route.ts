@@ -18,7 +18,12 @@ export const maxDuration = 60;
 export async function POST(request: NextRequest) {
   try {
     const body: FeedbackRequest = await request.json();
-    const { text, context, userLevel = 'intermediate' } = body;
+    const {
+      text,
+      context,
+      userLevel = 'intermediate',
+      targetLanguage = 'en',
+    } = body;
 
     if (!text || text.trim().length === 0) {
       return NextResponse.json(
@@ -36,7 +41,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Prepare the analysis prompt
-    const analysisPrompt = `${feedbackAnalyzerPrompt}
+    const analysisPrompt = `${feedbackAnalyzerPrompt(targetLanguage)}
 
 User level: ${userLevel}
 ${context ? `Context: ${context}` : ''}

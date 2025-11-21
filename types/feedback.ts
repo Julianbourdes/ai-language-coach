@@ -21,6 +21,7 @@ export interface FeedbackRequest {
   text: string;
   context?: string;
   userLevel?: 'beginner' | 'intermediate' | 'advanced';
+  targetLanguage?: string;
 }
 
 export interface FeedbackResponse {

@@ -127,6 +127,7 @@ export function LanguageCoachChat() {
           text,
           context: selectedScenario?.title,
           userLevel: 'intermediate',
+          targetLanguage: targetLanguage,
         }),
       });
 
