@@ -30,10 +30,33 @@ export function LanguageCoachChat() {
   } | null>(null);
 
   const lastMessageCountRef = useRef(0);
+  const [voicesLoaded, setVoicesLoaded] = useState(false);
 
   const { currentConversation, addMessage, updateMessage, addFeedback, isProcessing } =
     useConversationStore();
   const { selectedScenario, targetLanguage, setTargetLanguage } = useScenarioStore();
+
+  // Load voices on mount (browsers load voices asynchronously)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const loadVoices = () => {
+      const voices = window.speechSynthesis.getVoices();
+      if (voices.length > 0) {
+        setVoicesLoaded(true);
+      }
+    };
+
+    // Load immediately if available
+    loadVoices();
+
+    // Also listen for voiceschanged event (Chrome, Edge)
+    window.speechSynthesis.addEventListener('voiceschanged', loadVoices);
+
+    return () => {
+      window.speechSynthesis.removeEventListener('voiceschanged', loadVoices);
+    };
+  }, []);
 
   // Use Vercel AI SDK's useChat hook
   // ID changes with language to maintain separate conversations per language
@@ -60,6 +83,36 @@ export function LanguageCoachChat() {
     lastMessageCountRef.current = 0;
   }, [targetLanguage, selectedScenario]);
 
+  // Helper function to select the best voice for a language
+  const selectBestVoice = (langCode: string) => {
+    if (typeof window === 'undefined') return null;
+
+    const voices = window.speechSynthesis.getVoices();
+    if (voices.length === 0) return null;
+
+    // Priority order for voice selection:
+    // 1. Enhanced/Premium voices (often marked with specific keywords)
+    // 2. Neural voices (higher quality)
+    // 3. Local voices (better performance)
+    // 4. Any voice matching the language
+
+    const langVoices = voices.filter((voice) => voice.lang.startsWith(langCode));
+
+    // Look for premium/enhanced voices first
+    const premiumKeywords = ['premium', 'enhanced', 'neural', 'natural', 'google', 'microsoft'];
+    const premiumVoice = langVoices.find((voice) =>
+      premiumKeywords.some((keyword) => voice.name.toLowerCase().includes(keyword))
+    );
+    if (premiumVoice) return premiumVoice;
+
+    // Prefer local voices for better performance
+    const localVoice = langVoices.find((voice) => voice.localService);
+    if (localVoice) return localVoice;
+
+    // Return any matching voice
+    return langVoices[0] || null;
+  };
+
   // TTS: Speak assistant messages when they finish streaming
   useEffect(() => {
     if (!ttsEnabled || typeof window === 'undefined') return;
@@ -80,8 +133,20 @@ export function LanguageCoachChat() {
       if (textContent.trim()) {
         // Use Web Speech API to speak the text
         const utterance = new SpeechSynthesisUtterance(textContent);
-        utterance.lang = LANGUAGES[targetLanguage].voiceLang;
-        utterance.rate = 0.9; // Slightly slower for clarity
+        const langCode = LANGUAGES[targetLanguage].voiceLang;
+        utterance.lang = langCode;
+
+        // Select the best available voice
+        const bestVoice = selectBestVoice(langCode.split('-')[0]);
+        if (bestVoice) {
+          utterance.voice = bestVoice;
+        }
+
+        // Audio settings for more natural speech
+        utterance.rate = 0.95; // Slightly slower for clarity
+        utterance.pitch = 1.0; // Natural pitch
+        utterance.volume = 1.0; // Full volume
+
         window.speechSynthesis.speak(utterance);
       }
 
