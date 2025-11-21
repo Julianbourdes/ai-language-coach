@@ -6,7 +6,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { useChat } from 'ai/react';
+import { useChat } from '@ai-sdk/react';
 import { useRouter } from 'next/navigation';
 import { VoiceRecorder } from './voice/voice-recorder';
 import { HighlightText } from './feedback/highlight-text';
