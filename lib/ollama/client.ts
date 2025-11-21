@@ -1,8 +1,8 @@
 /**
- * Ollama client configuration using ollama-ai-provider
+ * Ollama client configuration using ollama-ai-provider-v2
  */
 
-import { ollama } from 'ollama-ai-provider';
+import { createOllama } from 'ollama-ai-provider-v2';
 
 // Get configuration from environment
 const baseURL = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
@@ -11,12 +11,14 @@ const modelName = process.env.OLLAMA_MODEL || 'llama3.1:8b';
 /**
  * Configured Ollama provider instance
  */
-export const ollamaProvider = ollama(baseURL);
+const ollama = createOllama({
+  baseURL: baseURL,
+});
 
 /**
  * Default model for language coaching
  */
-export const languageModel = ollamaProvider(modelName);
+export const languageModel = ollama(modelName);
 
 /**
  * Health check for Ollama service
