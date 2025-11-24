@@ -43,14 +43,34 @@ Before you begin, ensure you have the following installed:
 
 4. **Whisper** (for speech-to-text)
    ```bash
-   # macOS
+   # macOS (recommended: whisper.cpp)
    brew install whisper-cpp
 
    # Linux: Build from source
    # https://github.com/ggerganov/whisper.cpp
 
-   # Or use Python whisper
+   # Alternative: Python whisper (slower, requires more RAM)
    pip install openai-whisper
+   ```
+
+   **Important:** After installing whisper.cpp, you need to download a model:
+   ```bash
+   # Create models directory
+   mkdir -p models
+
+   # Download a model (base is recommended for balance of speed/accuracy)
+   # Options: tiny, base, small, medium, large
+   curl -L -o models/ggml-base.bin \
+     https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin
+   ```
+
+   Find your whisper executable path:
+   ```bash
+   # macOS with Homebrew
+   which whisper-cli  # Usually /opt/homebrew/bin/whisper-cli
+
+   # If using Python whisper
+   which whisper      # Usually /usr/local/bin/whisper
    ```
 
 ## Quick Start
@@ -85,9 +105,9 @@ ollama serve
 
 ### 4. Configure Environment
 
-The `.env.local` file is already configured with defaults:
+Create or update your `.env.local` file:
 
-```
+```bash
 # Database & Cache
 POSTGRES_URL=postgresql://languagecoach:local_dev_password@localhost:5432/languagecoach
 REDIS_URL=redis://localhost:6379
@@ -96,12 +116,22 @@ REDIS_URL=redis://localhost:6379
 OLLAMA_BASE_URL=http://localhost:11434
 OLLAMA_MODEL=llama3.1:8b
 
-# Whisper
-WHISPER_MODEL=small
-WHISPER_EXECUTABLE_PATH=/usr/local/bin/whisper
+# Whisper - IMPORTANT: Update these paths for your system!
+# For whisper.cpp: Use full path to the model file
+WHISPER_MODEL=/path/to/your/project/models/ggml-base.bin
+WHISPER_EXECUTABLE_PATH=/opt/homebrew/bin/whisper-cli
+
+# For Python whisper: Use model name instead
+# WHISPER_MODEL=base
+# WHISPER_EXECUTABLE_PATH=/usr/local/bin/whisper
+
+# Auth Secret (generate your own or use this for local dev)
+AUTH_SECRET="your-secret-key-here"
 ```
 
-Update the `WHISPER_EXECUTABLE_PATH` if needed based on your installation.
+**⚠️ Important:** You MUST update the Whisper configuration:
+- `WHISPER_MODEL`: Full path to your downloaded `.bin` model file (whisper.cpp) or model name (Python)
+- `WHISPER_EXECUTABLE_PATH`: Result of `which whisper-cli` or `which whisper`
 
 ### 5. Run the Application
 
@@ -193,18 +223,50 @@ ollama serve
 3. Refresh and allow access
 
 ### Whisper Issues
-```bash
-# Test installation
-whisper --version
 
-# Update path in .env.local if needed
+**Error: "Transcription failed" or 500 error**
+```bash
+# 1. Check if whisper is installed
+which whisper-cli  # or: which whisper
+
+# 2. Verify the model file exists
+ls -la models/ggml-base.bin
+
+# 3. Test whisper manually
+echo "Hello world" | whisper-cli -m models/ggml-base.bin -f -
+
+# 4. Check your .env.local has correct paths:
+# - WHISPER_MODEL must be FULL path to .bin file
+# - WHISPER_EXECUTABLE_PATH must be result of 'which whisper-cli'
 ```
+
+**Model file not found**
+```bash
+# Download the model
+curl -L -o models/ggml-base.bin \
+  https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin
+```
+
+**Supported audio formats**: WAV, MP3, OGG, FLAC (not WebM)
 
 ## System Requirements
 
 - **RAM**: 16GB recommended (8GB minimum)
 - **Disk**: ~10GB for models
-- **Browser**: Chrome, Edge, Safari
+- **Browser**: Chrome, Edge, Safari (with microphone access)
+- **OS**: macOS, Linux, Windows (with WSL2 for best experience)
+
+### Whisper Model Sizes
+
+| Model | Size | RAM | Speed | Accuracy | Best For |
+|-------|------|-----|-------|----------|----------|
+| tiny | 75 MB | ~1 GB | Fastest | Lower | Quick testing |
+| base | 142 MB | ~1 GB | Fast | Good | **Recommended** |
+| small | 466 MB | ~2 GB | Medium | Better | Better accuracy |
+| medium | 1.5 GB | ~5 GB | Slow | High | High accuracy |
+| large | 3 GB | ~10 GB | Slowest | Best | Maximum accuracy |
+
+Download models from: https://huggingface.co/ggerganov/whisper.cpp/tree/main
 
 ## License
 
