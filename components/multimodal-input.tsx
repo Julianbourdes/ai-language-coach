@@ -46,6 +46,7 @@ import { PreviewAttachment } from "./preview-attachment";
 import { SuggestedActions } from "./suggested-actions";
 import { Button } from "./ui/button";
 import type { VisibilityType } from "./visibility-selector";
+import { VoiceRecorderButton } from "./voice/voice-recorder-button";
 
 function PureMultimodalInput({
   chatId,
@@ -63,6 +64,7 @@ function PureMultimodalInput({
   selectedModelId,
   onModelChange,
   usage,
+  isLanguageCoachMode = false,
 }: {
   chatId: string;
   input: string;
@@ -79,6 +81,7 @@ function PureMultimodalInput({
   selectedModelId: string;
   onModelChange?: (modelId: string) => void;
   usage?: AppUsage;
+  isLanguageCoachMode?: boolean;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { width } = useWindowSize();
@@ -286,6 +289,16 @@ function PureMultimodalInput({
     return () => textarea.removeEventListener('paste', handlePaste);
   }, [handlePaste]);
 
+  // Handle voice transcription - set input text from transcription
+  const handleVoiceTranscription = useCallback(
+    (transcription: string) => {
+      setInput(transcription);
+      // Focus the textarea after transcription
+      textareaRef.current?.focus();
+    },
+    [setInput]
+  );
+
   return (
     <div className={cn("relative flex w-full flex-col gap-4", className)}>
       {messages.length === 0 &&
@@ -374,6 +387,13 @@ function PureMultimodalInput({
               selectedModelId={selectedModelId}
               status={status}
             />
+            {/* Voice recorder button - shown in Language Coach mode */}
+            {isLanguageCoachMode && (
+              <VoiceRecorderButton
+                onTranscription={handleVoiceTranscription}
+                disabled={status !== "ready"}
+              />
+            )}
             <ModelSelectorCompact
               onModelChange={onModelChange}
               selectedModelId={selectedModelId}
@@ -414,6 +434,9 @@ export const MultimodalInput = memo(
       return false;
     }
     if (prevProps.selectedModelId !== nextProps.selectedModelId) {
+      return false;
+    }
+    if (prevProps.isLanguageCoachMode !== nextProps.isLanguageCoachMode) {
       return false;
     }
 

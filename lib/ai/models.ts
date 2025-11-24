@@ -6,16 +6,12 @@ export type ChatModel = {
   description: string;
 };
 
+// For now, only Ollama model is available
+// Cloud models can be added later via environment variables
 export const chatModels: ChatModel[] = [
   {
     id: "chat-model",
-    name: "Grok Vision",
-    description: "Advanced multimodal model with vision and text capabilities",
-  },
-  {
-    id: "chat-model-reasoning",
-    name: "Grok Reasoning",
-    description:
-      "Uses advanced chain-of-thought reasoning for complex problems",
+    name: "Ollama (Local)",
+    description: "Local AI model for private language coaching - llama3.1:8b",
   },
 ];

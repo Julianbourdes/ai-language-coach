@@ -14,6 +14,21 @@ const filePartSchema = z.object({
 
 const partSchema = z.union([textPartSchema, filePartSchema]);
 
+// Language Coach: Scenario data schema
+const scenarioDataSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  description: z.string(),
+  category: z.string(),
+  difficulty: z.string(),
+  aiRole: z.string(),
+  systemPrompt: z.string(),
+  suggestedDuration: z.number(),
+  focusAreas: z.array(z.string()),
+  icon: z.string(),
+  tags: z.array(z.string()),
+}).nullable().optional();
+
 export const postRequestBodySchema = z.object({
   id: z.string().uuid(),
   message: z.object({
@@ -23,6 +38,10 @@ export const postRequestBodySchema = z.object({
   }),
   selectedChatModel: z.enum(["chat-model", "chat-model-reasoning"]),
   selectedVisibilityType: z.enum(["public", "private"]),
+  // Language Coach fields
+  targetLanguage: z.enum(["en", "fr", "es"]).nullable().optional(),
+  scenarioId: z.string().nullable().optional(),
+  scenarioData: scenarioDataSchema,
 });
 
 export type PostRequestBody = z.infer<typeof postRequestBodySchema>;

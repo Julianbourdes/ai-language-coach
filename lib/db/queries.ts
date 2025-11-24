@@ -22,12 +22,14 @@ import { generateUUID } from "../utils";
 import {
   type Chat,
   chat,
+  type ChatScenarioData,
   type DBMessage,
   document,
   message,
   type Suggestion,
   stream,
   suggestion,
+  type TargetLanguage,
   type User,
   user,
   vote,
@@ -85,11 +87,17 @@ export async function saveChat({
   userId,
   title,
   visibility,
+  targetLanguage,
+  scenarioId,
+  scenarioData,
 }: {
   id: string;
   userId: string;
   title: string;
   visibility: VisibilityType;
+  targetLanguage?: TargetLanguage;
+  scenarioId?: string;
+  scenarioData?: ChatScenarioData | null;
 }) {
   try {
     return await db.insert(chat).values({
@@ -98,6 +106,9 @@ export async function saveChat({
       userId,
       title,
       visibility,
+      targetLanguage,
+      scenarioId,
+      scenarioData,
     });
   } catch (_error) {
     throw new ChatSDKError("bad_request:database", "Failed to save chat");
