@@ -47,7 +47,8 @@ export function TTSButton({
     if (langVoices.length === 0) return null;
 
     // Priority: Premium/Enhanced voices > Local voices > Any voice
-    const premiumKeywords = ["premium", "enhanced", "neural", "natural"];
+    // Include google and microsoft as they often have higher quality voices
+    const premiumKeywords = ["premium", "enhanced", "neural", "natural", "google", "microsoft"];
     const premiumVoice = langVoices.find((v) =>
       premiumKeywords.some((k) => v.name.toLowerCase().includes(k))
     );

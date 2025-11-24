@@ -7,23 +7,26 @@ import { generateText } from 'ai';
 import { getLanguageModel } from '@/lib/ollama/client';
 import { feedbackAnalyzerPrompt } from '@/lib/ollama/prompts';
 import { nanoid } from 'nanoid';
-import type { FeedbackRequest, FeedbackResponse, Feedback } from '@/types';
+import { getMessageById, updateMessageParts } from '@/lib/db/queries';
+import type { LanguageFeedback, FeedbackResponse, FeedbackRequest } from '@/lib/types/language-coach';
 
 export const maxDuration = 60;
 
 /**
  * POST /api/feedback
  * Analyze text and return corrections
+ * Optionally persist feedback to message if messageId is provided
  */
 export async function POST(request: NextRequest) {
   try {
-    const body: FeedbackRequest = await request.json();
+    const body = await request.json();
     const {
       text,
       context,
       userLevel = 'intermediate',
       targetLanguage = 'en',
-    } = body;
+      messageId, // Optional: if provided, feedback will be persisted to the message
+    } = body as FeedbackRequest & { messageId?: string };
 
     if (!text || text.trim().length === 0) {
       return NextResponse.json(
@@ -59,7 +62,7 @@ Return ONLY a valid JSON array of corrections. If there are no corrections neede
       maxOutputTokens: 1500,
     });
 
-    let corrections: Feedback[] = [];
+    let corrections: LanguageFeedback[] = [];
 
     try {
       // Parse the JSON response
@@ -105,6 +108,39 @@ Return ONLY a valid JSON array of corrections. If there are no corrections neede
       overallScore,
       summary,
     };
+
+    // If messageId is provided, persist the feedback to the message
+    if (messageId) {
+      console.log('[Feedback API] Attempting to persist feedback for messageId:', messageId);
+      try {
+        const existingMessages = await getMessageById({ id: messageId });
+        console.log('[Feedback API] Found messages:', existingMessages.length);
+
+        if (existingMessages.length > 0) {
+          const existingMessage = existingMessages[0];
+          const existingParts = existingMessage.parts as unknown[];
+          console.log('[Feedback API] Existing parts count:', existingParts.length);
+
+          const updatedParts = [
+            ...existingParts,
+            {
+              type: 'language-feedback',
+              data: response,
+            },
+          ];
+
+          await updateMessageParts({ messageId, parts: updatedParts });
+          console.log('[Feedback API] Successfully persisted feedback');
+        } else {
+          console.log('[Feedback API] Message not found in database yet');
+        }
+      } catch (persistError) {
+        console.error('[Feedback API] Failed to persist feedback to message:', persistError);
+        // Continue - feedback was generated successfully, just not persisted
+      }
+    } else {
+      console.log('[Feedback API] No messageId provided, feedback not persisted');
+    }
 
     return NextResponse.json(response);
   } catch (error) {

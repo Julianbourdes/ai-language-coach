@@ -3,7 +3,7 @@ import type { UseChatHelpers } from "@ai-sdk/react";
 import equal from "fast-deep-equal";
 import { motion } from "framer-motion";
 import { memo, useState } from "react";
-import type { Vote } from "@/lib/db/schema";
+import type { Vote, TargetLanguage } from "@/lib/db/schema";
 import type { ChatMessage, FeedbackResponse } from "@/lib/types";
 import { cn, sanitizeText } from "@/lib/utils";
 import { useDataStream } from "./data-stream-provider";
@@ -24,6 +24,7 @@ import { MessageActions } from "./message-actions";
 import { MessageEditor } from "./message-editor";
 import { MessageReasoning } from "./message-reasoning";
 import { PreviewAttachment } from "./preview-attachment";
+import { TTSButton } from "./tts-button";
 import { Weather } from "./weather";
 
 // Type for language feedback part
@@ -41,6 +42,7 @@ const PurePreviewMessage = ({
   regenerate,
   isReadonly,
   requiresScrollPadding,
+  targetLanguage,
 }: {
   chatId: string;
   message: ChatMessage;
@@ -50,6 +52,7 @@ const PurePreviewMessage = ({
   regenerate: UseChatHelpers<ChatMessage>["regenerate"];
   isReadonly: boolean;
   requiresScrollPadding: boolean;
+  targetLanguage?: TargetLanguage | null;
 }) => {
   const [mode, setMode] = useState<"view" | "edit">("view");
 
@@ -147,6 +150,16 @@ const PurePreviewMessage = ({
                     >
                       <Response>{sanitizeText(part.text)}</Response>
                     </MessageContent>
+                    {/* TTS Button for assistant messages in Language Coach mode */}
+                    {message.role === "assistant" && targetLanguage && part.text && (
+                      <div className="mt-1 flex items-center">
+                        <TTSButton
+                          text={part.text}
+                          language={targetLanguage}
+                          size="sm"
+                        />
+                      </div>
+                    )}
                   </div>
                 );
               }
@@ -328,8 +341,11 @@ export const PreviewMessage = memo(
     if (!equal(prevProps.vote, nextProps.vote)) {
       return false;
     }
+    if (prevProps.targetLanguage !== nextProps.targetLanguage) {
+      return false;
+    }
 
-    return false;
+    return true;
   }
 );
 
