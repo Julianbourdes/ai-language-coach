@@ -602,3 +602,23 @@ export async function getStreamIdsByChatId({ chatId }: { chatId: string }) {
     );
   }
 }
+
+export async function updateMessageParts({
+  messageId,
+  parts,
+}: {
+  messageId: string;
+  parts: unknown[];
+}) {
+  try {
+    return await db
+      .update(message)
+      .set({ parts })
+      .where(eq(message.id, messageId));
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to update message parts"
+    );
+  }
+}

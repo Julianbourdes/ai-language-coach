@@ -160,6 +160,10 @@ export function Chat({
   // Wrapper for sendMessage that also requests feedback in Language Coach mode
   const sendMessage = useCallback(
     async (message: Parameters<typeof baseSendMessage>[0]) => {
+      // Get the message ID - it should be passed from multimodal-input
+      const messageId = (message as ChatMessage).id;
+      console.log('[Chat] sendMessage called with messageId:', messageId);
+
       baseSendMessage(message);
 
       // In Language Coach mode, request feedback for user messages
@@ -167,6 +171,7 @@ export function Chat({
         // Get the text content from the message parts
         const textPart = message.parts.find((p) => p.type === "text");
         if (textPart && "text" in textPart) {
+          console.log('[Chat] Requesting feedback for messageId:', messageId);
           try {
             const response = await fetch("/api/feedback", {
               method: "POST",
@@ -175,14 +180,15 @@ export function Chat({
                 text: textPart.text,
                 targetLanguage: targetLanguageRef.current,
                 context: scenarioDataRef.current?.title,
+                messageId, // Include messageId to persist feedback to DB
               }),
             });
 
             if (response.ok) {
               const feedbackData: FeedbackResponse = await response.json();
 
-              // Add feedback as a part to the user's message
-              // We need to update the message after it's been added
+              // Add feedback as a part to the user's message in UI state
+              // The API also persists it to the DB if messageId was provided
               setMessages((currentMessages) => {
                 const lastUserMessageIndex = currentMessages.findLastIndex(
                   (m) => m.role === "user"
@@ -283,6 +289,7 @@ export function Chat({
           selectedModelId={initialChatModel}
           setMessages={setMessages}
           status={status}
+          targetLanguage={isLanguageCoachMode ? targetLanguage : undefined}
           votes={votes}
         />
 

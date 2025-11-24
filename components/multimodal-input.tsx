@@ -24,7 +24,7 @@ import { chatModels } from "@/lib/ai/models";
 import { myProvider } from "@/lib/ai/providers";
 import type { Attachment, ChatMessage } from "@/lib/types";
 import type { AppUsage } from "@/lib/usage";
-import { cn } from "@/lib/utils";
+import { cn, generateUUID } from "@/lib/utils";
 import { Context } from "./elements/context";
 import {
   PromptInput,
@@ -135,7 +135,11 @@ function PureMultimodalInput({
   const submitForm = useCallback(() => {
     window.history.pushState({}, "", `/chat/${chatId}`);
 
+    // Generate message ID upfront so it can be used for feedback persistence
+    const messageId = generateUUID();
+
     sendMessage({
+      id: messageId,
       role: "user",
       parts: [
         ...attachments.map((attachment) => ({

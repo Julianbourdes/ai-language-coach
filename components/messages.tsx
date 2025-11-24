@@ -4,7 +4,7 @@ import { AnimatePresence } from "framer-motion";
 import { ArrowDownIcon } from "lucide-react";
 import { memo, useEffect } from "react";
 import { useMessages } from "@/hooks/use-messages";
-import type { Vote } from "@/lib/db/schema";
+import type { Vote, TargetLanguage } from "@/lib/db/schema";
 import type { ChatMessage } from "@/lib/types";
 import { useDataStream } from "./data-stream-provider";
 import { Conversation, ConversationContent } from "./elements/conversation";
@@ -21,6 +21,7 @@ type MessagesProps = {
   isReadonly: boolean;
   isArtifactVisible: boolean;
   selectedModelId: string;
+  targetLanguage?: TargetLanguage | null;
 };
 
 function PureMessages({
@@ -32,6 +33,7 @@ function PureMessages({
   regenerate,
   isReadonly,
   selectedModelId,
+  targetLanguage,
 }: MessagesProps) {
   const {
     containerRef: messagesContainerRef,
@@ -83,6 +85,7 @@ function PureMessages({
                 hasSentMessage && index === messages.length - 1
               }
               setMessages={setMessages}
+              targetLanguage={targetLanguage}
               vote={
                 votes
                   ? votes.find((vote) => vote.messageId === message.id)
@@ -136,6 +139,9 @@ export const Messages = memo(PureMessages, (prevProps, nextProps) => {
   if (!equal(prevProps.votes, nextProps.votes)) {
     return false;
   }
+  if (prevProps.targetLanguage !== nextProps.targetLanguage) {
+    return false;
+  }
 
-  return false;
+  return true;
 });
