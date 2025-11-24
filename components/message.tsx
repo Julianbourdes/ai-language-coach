@@ -4,7 +4,7 @@ import equal from "fast-deep-equal";
 import { motion } from "framer-motion";
 import { memo, useState } from "react";
 import type { Vote } from "@/lib/db/schema";
-import type { ChatMessage } from "@/lib/types";
+import type { ChatMessage, FeedbackResponse } from "@/lib/types";
 import { cn, sanitizeText } from "@/lib/utils";
 import { useDataStream } from "./data-stream-provider";
 import { DocumentToolResult } from "./document";
@@ -18,12 +18,19 @@ import {
   ToolInput,
   ToolOutput,
 } from "./elements/tool";
+import { MessageFeedback } from "./feedback/message-feedback";
 import { SparklesIcon } from "./icons";
 import { MessageActions } from "./message-actions";
 import { MessageEditor } from "./message-editor";
 import { MessageReasoning } from "./message-reasoning";
 import { PreviewAttachment } from "./preview-attachment";
 import { Weather } from "./weather";
+
+// Type for language feedback part
+interface LanguageFeedbackPart {
+  type: "language-feedback";
+  data: FeedbackResponse;
+}
 
 const PurePreviewMessage = ({
   chatId,
@@ -264,6 +271,23 @@ const PurePreviewMessage = ({
                     )}
                   </ToolContent>
                 </Tool>
+              );
+            }
+
+            // Language Coach: Render language feedback
+            if (type === "language-feedback") {
+              const feedbackPart = part as unknown as LanguageFeedbackPart;
+              // Find the text content from this message to display with feedback
+              const textPart = message.parts.find((p) => p.type === "text");
+              const messageText = textPart && "text" in textPart ? textPart.text : "";
+
+              return (
+                <MessageFeedback
+                  key={key}
+                  text={messageText}
+                  feedback={feedbackPart.data}
+                  className="mt-2"
+                />
               );
             }
 

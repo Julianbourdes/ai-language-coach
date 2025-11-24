@@ -3,7 +3,7 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import useSWR, { useSWRConfig } from "swr";
 import { unstable_serialize } from "swr/infinite";
 import { ChatHeader } from "@/components/chat-header";
@@ -20,15 +20,17 @@ import {
 import { useArtifactSelector } from "@/hooks/use-artifact";
 import { useAutoResume } from "@/hooks/use-auto-resume";
 import { useChatVisibility } from "@/hooks/use-chat-visibility";
-import type { Vote } from "@/lib/db/schema";
+import type { ChatScenarioData, Vote, TargetLanguage } from "@/lib/db/schema";
 import { ChatSDKError } from "@/lib/errors";
-import type { Attachment, ChatMessage } from "@/lib/types";
+import type { Attachment, ChatMessage, FeedbackResponse } from "@/lib/types";
 import type { AppUsage } from "@/lib/usage";
 import { fetcher, fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
 import { Artifact } from "./artifact";
 import { useDataStream } from "./data-stream-provider";
+import { LanguageSelector } from "./language-selector";
 import { Messages } from "./messages";
 import { MultimodalInput } from "./multimodal-input";
+import { ScenarioSelector } from "./scenario-selector";
 import { getChatHistoryPaginationKey } from "./sidebar-history";
 import { toast } from "./toast";
 import type { VisibilityType } from "./visibility-selector";
@@ -41,6 +43,9 @@ export function Chat({
   isReadonly,
   autoResume,
   initialLastContext,
+  // Language Coach fields
+  initialTargetLanguage,
+  initialScenarioData,
 }: {
   id: string;
   initialMessages: ChatMessage[];
@@ -49,6 +54,9 @@ export function Chat({
   isReadonly: boolean;
   autoResume: boolean;
   initialLastContext?: AppUsage;
+  // Language Coach fields - null means it's a regular chat, not language coach
+  initialTargetLanguage?: TargetLanguage | null;
+  initialScenarioData?: ChatScenarioData | null;
 }) {
   const { visibilityType } = useChatVisibility({
     chatId: id,
@@ -64,14 +72,35 @@ export function Chat({
   const [currentModelId, setCurrentModelId] = useState(initialChatModel);
   const currentModelIdRef = useRef(currentModelId);
 
+  // Language Coach state
+  const [targetLanguage, setTargetLanguage] = useState<TargetLanguage>(
+    initialTargetLanguage || "en"
+  );
+  const [scenarioData, setScenarioData] = useState<ChatScenarioData | null>(
+    initialScenarioData || null
+  );
+  const targetLanguageRef = useRef(targetLanguage);
+  const scenarioDataRef = useRef(scenarioData);
+
+  // Determine if we're in Language Coach mode
+  const isLanguageCoachMode = initialTargetLanguage !== undefined && initialTargetLanguage !== null;
+
   useEffect(() => {
     currentModelIdRef.current = currentModelId;
   }, [currentModelId]);
 
+  useEffect(() => {
+    targetLanguageRef.current = targetLanguage;
+  }, [targetLanguage]);
+
+  useEffect(() => {
+    scenarioDataRef.current = scenarioData;
+  }, [scenarioData]);
+
   const {
     messages,
     setMessages,
-    sendMessage,
+    sendMessage: baseSendMessage,
     status,
     stop,
     regenerate,
@@ -91,6 +120,12 @@ export function Chat({
             message: request.messages.at(-1),
             selectedChatModel: currentModelIdRef.current,
             selectedVisibilityType: visibilityType,
+            // Language Coach fields - only send if in language coach mode
+            ...(isLanguageCoachMode && {
+              targetLanguage: targetLanguageRef.current,
+              scenarioId: scenarioDataRef.current?.id,
+              scenarioData: scenarioDataRef.current,
+            }),
             ...request.body,
           },
         };
@@ -121,6 +156,66 @@ export function Chat({
       }
     },
   });
+
+  // Wrapper for sendMessage that also requests feedback in Language Coach mode
+  const sendMessage = useCallback(
+    async (message: Parameters<typeof baseSendMessage>[0]) => {
+      baseSendMessage(message);
+
+      // In Language Coach mode, request feedback for user messages
+      if (isLanguageCoachMode && message.role === "user") {
+        // Get the text content from the message parts
+        const textPart = message.parts.find((p) => p.type === "text");
+        if (textPart && "text" in textPart) {
+          try {
+            const response = await fetch("/api/feedback", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                text: textPart.text,
+                targetLanguage: targetLanguageRef.current,
+                context: scenarioDataRef.current?.title,
+              }),
+            });
+
+            if (response.ok) {
+              const feedbackData: FeedbackResponse = await response.json();
+
+              // Add feedback as a part to the user's message
+              // We need to update the message after it's been added
+              setMessages((currentMessages) => {
+                const lastUserMessageIndex = currentMessages.findLastIndex(
+                  (m) => m.role === "user"
+                );
+                if (lastUserMessageIndex === -1) return currentMessages;
+
+                const updatedMessages = [...currentMessages];
+                const lastUserMessage = updatedMessages[lastUserMessageIndex];
+
+                // Add feedback part to the message
+                updatedMessages[lastUserMessageIndex] = {
+                  ...lastUserMessage,
+                  parts: [
+                    ...lastUserMessage.parts,
+                    {
+                      type: "language-feedback" as const,
+                      data: feedbackData,
+                    } as any,
+                  ],
+                };
+
+                return updatedMessages;
+              });
+            }
+          } catch (error) {
+            console.error("Failed to get feedback:", error);
+            // Don't show error to user - feedback is optional
+          }
+        }
+      }
+    },
+    [baseSendMessage, isLanguageCoachMode, setMessages]
+  );
 
   const searchParams = useSearchParams();
   const query = searchParams.get("query");
@@ -161,7 +256,23 @@ export function Chat({
           chatId={id}
           isReadonly={isReadonly}
           selectedVisibilityType={initialVisibilityType}
-        />
+        >
+          {/* Language Coach controls in header */}
+          {isLanguageCoachMode && !isReadonly && (
+            <div className="flex items-center gap-2">
+              <LanguageSelector
+                value={targetLanguage}
+                onChange={setTargetLanguage}
+                disabled={messages.length > 0} // Can't change language once conversation started
+              />
+              <ScenarioSelector
+                value={scenarioData}
+                onChange={setScenarioData}
+                disabled={messages.length > 0} // Can't change scenario once conversation started
+              />
+            </div>
+          )}
+        </ChatHeader>
 
         <Messages
           chatId={id}
@@ -192,6 +303,7 @@ export function Chat({
               status={status}
               stop={stop}
               usage={usage}
+              isLanguageCoachMode={isLanguageCoachMode}
             />
           )}
         </div>

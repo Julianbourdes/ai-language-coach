@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { memo } from "react";
+import { memo, type ReactNode } from "react";
 import { useWindowSize } from "usehooks-ts";
 import { SidebarToggle } from "@/components/sidebar-toggle";
 import { Button } from "@/components/ui/button";
@@ -14,10 +14,12 @@ function PureChatHeader({
   chatId,
   selectedVisibilityType,
   isReadonly,
+  children,
 }: {
   chatId: string;
   selectedVisibilityType: VisibilityType;
   isReadonly: boolean;
+  children?: ReactNode;
 }) {
   const router = useRouter();
   const { open } = useSidebar();
@@ -48,6 +50,11 @@ function PureChatHeader({
           className="order-1 md:order-2"
           selectedVisibilityType={selectedVisibilityType}
         />
+      )}
+
+      {/* Language Coach controls slot */}
+      {children && (
+        <div className="order-2 md:order-3">{children}</div>
       )}
 
       <Button

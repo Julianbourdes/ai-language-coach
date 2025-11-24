@@ -6,7 +6,10 @@
 
 import { useEffect, useRef } from 'react';
 import { X, AlertCircle, AlertTriangle, Lightbulb } from 'lucide-react';
-import type { Feedback } from '@/types';
+import type { LanguageFeedback } from '@/lib/types/language-coach';
+
+// Alias for backward compatibility
+type Feedback = LanguageFeedback;
 
 interface CorrectionTooltipProps {
   feedback: Feedback;

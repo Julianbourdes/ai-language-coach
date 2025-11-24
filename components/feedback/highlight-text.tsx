@@ -5,8 +5,11 @@
  */
 
 import { useState } from 'react';
-import type { Feedback } from '@/types';
+import type { LanguageFeedback } from '@/lib/types/language-coach';
 import { CorrectionTooltip } from './correction-tooltip';
+
+// Alias for backward compatibility
+type Feedback = LanguageFeedback;
 
 interface HighlightTextProps {
   text: string;

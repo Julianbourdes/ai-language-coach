@@ -21,6 +21,24 @@ export const user = pgTable("User", {
 
 export type User = InferSelectModel<typeof user>;
 
+// Language Coach: Supported target languages
+export type TargetLanguage = "en" | "fr" | "es";
+
+// Language Coach: Scenario data stored in chat
+export interface ChatScenarioData {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  difficulty: string;
+  aiRole: string;
+  systemPrompt: string;
+  suggestedDuration: number;
+  focusAreas: string[];
+  icon: string;
+  tags: string[];
+}
+
 export const chat = pgTable("Chat", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
   createdAt: timestamp("createdAt").notNull(),
@@ -32,6 +50,12 @@ export const chat = pgTable("Chat", {
     .notNull()
     .default("private"),
   lastContext: jsonb("lastContext").$type<AppUsage | null>(),
+  // Language Coach fields
+  targetLanguage: varchar("targetLanguage", { length: 2 })
+    .$type<TargetLanguage>()
+    .default("en"),
+  scenarioId: varchar("scenarioId", { length: 100 }),
+  scenarioData: jsonb("scenarioData").$type<ChatScenarioData | null>(),
 });
 
 export type Chat = InferSelectModel<typeof chat>;

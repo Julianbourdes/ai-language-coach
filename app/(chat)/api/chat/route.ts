@@ -37,7 +37,7 @@ import {
   saveMessages,
   updateChatLastContextById,
 } from "@/lib/db/queries";
-import type { DBMessage } from "@/lib/db/schema";
+import type { ChatScenarioData, DBMessage, TargetLanguage } from "@/lib/db/schema";
 import { ChatSDKError } from "@/lib/errors";
 import type { ChatMessage } from "@/lib/types";
 import type { AppUsage } from "@/lib/usage";
@@ -101,11 +101,18 @@ export async function POST(request: Request) {
       message,
       selectedChatModel,
       selectedVisibilityType,
+      // Language Coach fields
+      targetLanguage,
+      scenarioId,
+      scenarioData,
     }: {
       id: string;
       message: ChatMessage;
       selectedChatModel: ChatModel["id"];
       selectedVisibilityType: VisibilityType;
+      targetLanguage?: TargetLanguage | null;
+      scenarioId?: string | null;
+      scenarioData?: ChatScenarioData | null;
     } = requestBody;
 
     const session = await auth();
@@ -128,12 +135,19 @@ export async function POST(request: Request) {
     const chat = await getChatById({ id });
     let messagesFromDb: DBMessage[] = [];
 
+    // Get language/scenario from existing chat or from request
+    let chatTargetLanguage: TargetLanguage | undefined | null = targetLanguage;
+    let chatScenarioData: ChatScenarioData | undefined | null = scenarioData;
+
     if (chat) {
       if (chat.userId !== session.user.id) {
         return new ChatSDKError("forbidden:chat").toResponse();
       }
       // Only fetch messages if chat already exists
       messagesFromDb = await getMessagesByChatId({ id });
+      // Use existing chat's language/scenario if not provided in request
+      chatTargetLanguage = chat.targetLanguage;
+      chatScenarioData = chat.scenarioData;
     } else {
       const title = await generateTitleFromUserMessage({
         message,
@@ -144,6 +158,10 @@ export async function POST(request: Request) {
         userId: session.user.id,
         title,
         visibility: selectedVisibilityType,
+        // Language Coach fields
+        targetLanguage: targetLanguage ?? undefined,
+        scenarioId: scenarioId ?? undefined,
+        scenarioData: scenarioData ?? undefined,
       });
       // New chat - no need to fetch messages, it's empty
     }
@@ -177,15 +195,26 @@ export async function POST(request: Request) {
 
     let finalMergedUsage: AppUsage | undefined;
 
+    // Determine if we're in Language Coach mode
+    const isLanguageCoachMode = !!chatTargetLanguage;
+
     const stream = createUIMessageStream({
       execute: ({ writer: dataStream }) => {
         const result = streamText({
           model: myProvider.languageModel(selectedChatModel),
-          system: systemPrompt({ selectedChatModel, requestHints }),
+          // Use Language Coach prompts if targetLanguage is set
+          system: systemPrompt({
+            selectedChatModel,
+            requestHints,
+            targetLanguage: chatTargetLanguage,
+            scenarioData: chatScenarioData,
+          }),
           messages: convertToModelMessages(uiMessages),
           stopWhen: stepCountIs(5),
-          experimental_activeTools:
-            selectedChatModel === "chat-model-reasoning"
+          // Disable tools in Language Coach mode for cleaner conversation
+          experimental_activeTools: isLanguageCoachMode
+            ? []
+            : selectedChatModel === "chat-model-reasoning"
               ? []
               : [
                   "getWeather",
@@ -194,15 +223,17 @@ export async function POST(request: Request) {
                   "requestSuggestions",
                 ],
           experimental_transform: smoothStream({ chunking: "word" }),
-          tools: {
-            getWeather,
-            createDocument: createDocument({ session, dataStream }),
-            updateDocument: updateDocument({ session, dataStream }),
-            requestSuggestions: requestSuggestions({
-              session,
-              dataStream,
-            }),
-          },
+          tools: isLanguageCoachMode
+            ? {}
+            : {
+                getWeather,
+                createDocument: createDocument({ session, dataStream }),
+                updateDocument: updateDocument({ session, dataStream }),
+                requestSuggestions: requestSuggestions({
+                  session,
+                  dataStream,
+                }),
+              },
           experimental_telemetry: {
             isEnabled: isProductionEnvironment,
             functionId: "stream-text",
