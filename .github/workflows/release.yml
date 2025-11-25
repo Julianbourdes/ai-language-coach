@@ -34,7 +34,7 @@ jobs:
         run: pnpm install --no-frozen-lockfile
 
       - name: Build application
-        run: pnpm build
+        run: npx next build
         env:
           POSTGRES_URL: postgresql://fake:fake@localhost:5432/fake
           AUTH_SECRET: fake-secret-for-build
