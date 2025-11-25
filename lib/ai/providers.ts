@@ -1,5 +1,5 @@
-import { ollama } from "ollama-ai-provider-v2";
 import { customProvider } from "ai";
+import { ollama } from "ollama-ai-provider-v2";
 import { isTestEnvironment } from "../constants";
 
 // Get Ollama model from environment

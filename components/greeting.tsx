@@ -22,7 +22,7 @@ export const Greeting = () => {
         initial={{ opacity: 0, y: 10 }}
         transition={{ delay: 0.6 }}
       >
-        Let's chat together and improve our language skills ! 
+        Let's chat together and improve our language skills !
       </motion.div>
       <motion.div
         animate={{ opacity: 1, y: 0 }}

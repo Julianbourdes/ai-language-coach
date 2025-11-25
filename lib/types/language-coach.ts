@@ -2,7 +2,7 @@
  * Language Coach specific types
  */
 
-import type { TargetLanguage, ChatScenarioData } from "@/lib/db/schema";
+import type { ChatScenarioData, TargetLanguage } from "@/lib/db/schema";
 
 // Re-export from schema for convenience
 export type { TargetLanguage, ChatScenarioData };
@@ -26,7 +26,7 @@ export type FeedbackType = "grammar" | "vocabulary" | "style";
 
 export type FeedbackSeverity = "error" | "warning" | "suggestion";
 
-export interface LanguageFeedback {
+export type LanguageFeedback = {
   id: string;
   type: FeedbackType;
   severity: FeedbackSeverity;
@@ -35,40 +35,40 @@ export interface LanguageFeedback {
   explanation: string;
   startIndex: number;
   endIndex: number;
-}
+};
 
-export interface FeedbackRequest {
+export type FeedbackRequest = {
   text: string;
   context?: string;
   userLevel?: "beginner" | "intermediate" | "advanced";
   targetLanguage?: TargetLanguage;
-}
+};
 
-export interface FeedbackResponse {
+export type FeedbackResponse = {
   original: string;
   corrections: LanguageFeedback[];
   overallScore: number; // 0-100
   summary: string;
-}
+};
 
 /**
  * Language feedback part to be stored in message.parts
  * This is a custom part type for the Vercel AI SDK
  */
-export interface LanguageFeedbackPart {
+export type LanguageFeedbackPart = {
   type: "language-feedback";
   data: FeedbackResponse;
-}
+};
 
 /**
  * Audio transcription part for voice messages
  */
-export interface AudioTranscriptionPart {
+export type AudioTranscriptionPart = {
   type: "audio-transcription";
   audioUrl?: string;
   transcription: string;
   timestamp: string;
-}
+};
 
 /**
  * Voice recording state
@@ -78,22 +78,22 @@ export type VoiceRecordingState = "idle" | "recording" | "transcribing";
 /**
  * TTS (Text-to-Speech) state
  */
-export interface TTSState {
+export type TTSState = {
   isEnabled: boolean;
   isSpeaking: boolean;
   currentMessageId: string | null;
-}
+};
 
 /**
  * Language Coach chat context
  * Passed to the chat component to enable language coaching features
  */
-export interface LanguageCoachContext {
+export type LanguageCoachContext = {
   targetLanguage: TargetLanguage;
   scenario?: ChatScenarioData | null;
   ttsEnabled: boolean;
   feedbackEnabled: boolean;
-}
+};
 
 /**
  * Scenario category for filtering

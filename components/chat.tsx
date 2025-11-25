@@ -20,7 +20,7 @@ import {
 import { useArtifactSelector } from "@/hooks/use-artifact";
 import { useAutoResume } from "@/hooks/use-auto-resume";
 import { useChatVisibility } from "@/hooks/use-chat-visibility";
-import type { ChatScenarioData, Vote, TargetLanguage } from "@/lib/db/schema";
+import type { ChatScenarioData, TargetLanguage, Vote } from "@/lib/db/schema";
 import { ChatSDKError } from "@/lib/errors";
 import type { Attachment, ChatMessage, FeedbackResponse } from "@/lib/types";
 import type { AppUsage } from "@/lib/usage";
@@ -82,7 +82,12 @@ export function Chat({
   const targetLanguageRef = useRef(targetLanguage);
   const scenarioDataRef = useRef(scenarioData);
 
-  console.log('[Chat] Current state - targetLanguage:', targetLanguage, 'scenarioData:', scenarioData?.title || 'Free Conversation');
+  console.log(
+    "[Chat] Current state - targetLanguage:",
+    targetLanguage,
+    "scenarioData:",
+    scenarioData?.title || "Free Conversation"
+  );
 
   // Language Coach mode is always active
   const isLanguageCoachMode = true;
@@ -92,12 +97,15 @@ export function Chat({
   }, [currentModelId]);
 
   useEffect(() => {
-    console.log('[Chat] targetLanguage changed to:', targetLanguage);
+    console.log("[Chat] targetLanguage changed to:", targetLanguage);
     targetLanguageRef.current = targetLanguage;
   }, [targetLanguage]);
 
   useEffect(() => {
-    console.log('[Chat] scenarioData changed to:', scenarioData?.title || 'Free Conversation');
+    console.log(
+      "[Chat] scenarioData changed to:",
+      scenarioData?.title || "Free Conversation"
+    );
     scenarioDataRef.current = scenarioData;
   }, [scenarioData]);
 
@@ -166,7 +174,7 @@ export function Chat({
     async (message: Parameters<typeof baseSendMessage>[0]) => {
       // Get the message ID - it should be passed from multimodal-input
       const messageId = (message as ChatMessage).id;
-      console.log('[Chat] sendMessage called with messageId:', messageId);
+      console.log("[Chat] sendMessage called with messageId:", messageId);
 
       baseSendMessage(message);
 
@@ -175,7 +183,7 @@ export function Chat({
         // Get the text content from the message parts
         const textPart = message.parts.find((p) => p.type === "text");
         if (textPart && "text" in textPart) {
-          console.log('[Chat] Requesting feedback for messageId:', messageId);
+          console.log("[Chat] Requesting feedback for messageId:", messageId);
           try {
             const response = await fetch("/api/feedback", {
               method: "POST",
@@ -197,7 +205,9 @@ export function Chat({
                 const lastUserMessageIndex = currentMessages.findLastIndex(
                   (m) => m.role === "user"
                 );
-                if (lastUserMessageIndex === -1) return currentMessages;
+                if (lastUserMessageIndex === -1) {
+                  return currentMessages;
+                }
 
                 const updatedMessages = [...currentMessages];
                 const lastUserMessage = updatedMessages[lastUserMessageIndex];
@@ -224,7 +234,7 @@ export function Chat({
         }
       }
     },
-    [baseSendMessage, isLanguageCoachMode, setMessages]
+    [baseSendMessage, setMessages]
   );
 
   const searchParams = useSearchParams();
@@ -271,20 +281,23 @@ export function Chat({
           {isLanguageCoachMode && !isReadonly && (
             <div className="flex items-center gap-2">
               <LanguageSelector
-                value={targetLanguage}
+                disabled={messages.length > 0}
                 onChange={(lang) => {
-                  console.log('[Chat] setTargetLanguage called with:', lang);
+                  console.log("[Chat] setTargetLanguage called with:", lang);
                   setTargetLanguage(lang);
                 }}
-                disabled={messages.length > 0} // Can't change language once conversation started
+                value={targetLanguage} // Can't change language once conversation started
               />
               <ScenarioSelector
-                value={scenarioData}
+                disabled={messages.length > 0}
                 onChange={(scenario) => {
-                  console.log('[Chat] setScenarioData called with:', scenario?.title || 'Free Conversation');
+                  console.log(
+                    "[Chat] setScenarioData called with:",
+                    scenario?.title || "Free Conversation"
+                  );
                   setScenarioData(scenario);
                 }}
-                disabled={messages.length > 0} // Can't change scenario once conversation started
+                value={scenarioData} // Can't change scenario once conversation started
               />
             </div>
           )}
@@ -309,6 +322,7 @@ export function Chat({
               attachments={attachments}
               chatId={id}
               input={input}
+              isLanguageCoachMode={isLanguageCoachMode}
               messages={messages}
               onModelChange={setCurrentModelId}
               selectedModelId={currentModelId}
@@ -320,7 +334,6 @@ export function Chat({
               status={status}
               stop={stop}
               usage={usage}
-              isLanguageCoachMode={isLanguageCoachMode}
             />
           )}
         </div>

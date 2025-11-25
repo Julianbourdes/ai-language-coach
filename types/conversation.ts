@@ -2,26 +2,26 @@
  * Types for conversations and messages
  */
 
-import type { Feedback } from './feedback';
+import type { Feedback } from "./feedback";
 
-export interface Message {
+export type Message = {
   id: string;
-  role: 'user' | 'assistant' | 'system';
+  role: "user" | "assistant" | "system";
   content: string;
   timestamp: Date;
   audioUrl?: string;
   transcription?: string;
   feedback?: Feedback[];
-}
+};
 
-export interface ConversationStats {
+export type ConversationStats = {
   duration: number; // in seconds
   wordCount: number;
   errorCount: number;
   improvementScore: number; // 0-100
-}
+};
 
-export interface Conversation {
+export type Conversation = {
   id: string;
   title: string;
   messages: Message[];
@@ -29,4 +29,4 @@ export interface Conversation {
   createdAt: Date;
   updatedAt: Date;
   stats?: ConversationStats;
-}
+};

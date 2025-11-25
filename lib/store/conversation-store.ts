@@ -2,12 +2,17 @@
  * Zustand store for managing conversations
  */
 
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { nanoid } from 'nanoid';
-import type { Conversation, Message, Feedback, ConversationStats } from '@/types';
+import { nanoid } from "nanoid";
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import type {
+  Conversation,
+  ConversationStats,
+  Feedback,
+  Message,
+} from "@/types";
 
-interface ConversationState {
+type ConversationState = {
   // State
   currentConversation: Conversation | null;
   conversations: Conversation[];
@@ -17,7 +22,7 @@ interface ConversationState {
 
   // Actions
   startNewConversation: (scenarioId?: string, title?: string) => void;
-  addMessage: (message: Omit<Message, 'id' | 'timestamp'>) => void;
+  addMessage: (message: Omit<Message, "id" | "timestamp">) => void;
   updateMessage: (messageId: string, updates: Partial<Message>) => void;
   addFeedback: (messageId: string, feedback: Feedback[]) => void;
   setRecording: (isRecording: boolean) => void;
@@ -27,7 +32,7 @@ interface ConversationState {
   loadConversation: (conversationId: string) => void;
   deleteConversation: (conversationId: string) => void;
   clearCurrentConversation: () => void;
-}
+};
 
 export const useConversationStore = create<ConversationState>()(
   persist(
@@ -56,7 +61,9 @@ export const useConversationStore = create<ConversationState>()(
       // Add a new message to the current conversation
       addMessage: (message) => {
         const { currentConversation } = get();
-        if (!currentConversation) return;
+        if (!currentConversation) {
+          return;
+        }
 
         const newMessage: Message = {
           ...message,
@@ -76,7 +83,9 @@ export const useConversationStore = create<ConversationState>()(
       // Update an existing message
       updateMessage: (messageId, updates) => {
         const { currentConversation } = get();
-        if (!currentConversation) return;
+        if (!currentConversation) {
+          return;
+        }
 
         const updatedMessages = currentConversation.messages.map((msg) =>
           msg.id === messageId ? { ...msg, ...updates } : msg
@@ -94,7 +103,9 @@ export const useConversationStore = create<ConversationState>()(
       // Add feedback to a message
       addFeedback: (messageId, feedback) => {
         const { currentConversation } = get();
-        if (!currentConversation) return;
+        if (!currentConversation) {
+          return;
+        }
 
         const updatedMessages = currentConversation.messages.map((msg) =>
           msg.id === messageId ? { ...msg, feedback } : msg
@@ -121,7 +132,9 @@ export const useConversationStore = create<ConversationState>()(
       // End the current conversation and save it
       endConversation: () => {
         const { currentConversation, conversations } = get();
-        if (!currentConversation) return;
+        if (!currentConversation) {
+          return;
+        }
 
         // Calculate stats
         const stats = calculateConversationStats(currentConversation);
@@ -132,7 +145,9 @@ export const useConversationStore = create<ConversationState>()(
         };
 
         // Add to conversations list or update existing
-        const existingIndex = conversations.findIndex((c) => c.id === finalConversation.id);
+        const existingIndex = conversations.findIndex(
+          (c) => c.id === finalConversation.id
+        );
         let updatedConversations: Conversation[];
 
         if (existingIndex >= 0) {
@@ -162,12 +177,16 @@ export const useConversationStore = create<ConversationState>()(
       deleteConversation: (conversationId) => {
         const { conversations, currentConversation } = get();
 
-        const updatedConversations = conversations.filter((c) => c.id !== conversationId);
+        const updatedConversations = conversations.filter(
+          (c) => c.id !== conversationId
+        );
 
         set({
           conversations: updatedConversations,
           currentConversation:
-            currentConversation?.id === conversationId ? null : currentConversation,
+            currentConversation?.id === conversationId
+              ? null
+              : currentConversation,
         });
       },
 
@@ -177,7 +196,7 @@ export const useConversationStore = create<ConversationState>()(
       },
     }),
     {
-      name: 'conversation-storage',
+      name: "conversation-storage",
       // Only persist conversations, not UI states
       partialize: (state) => ({
         conversations: state.conversations,
@@ -189,13 +208,15 @@ export const useConversationStore = create<ConversationState>()(
 /**
  * Calculate conversation statistics
  */
-function calculateConversationStats(conversation: Conversation): ConversationStats {
-  const userMessages = conversation.messages.filter((m) => m.role === 'user');
+function calculateConversationStats(
+  conversation: Conversation
+): ConversationStats {
+  const userMessages = conversation.messages.filter((m) => m.role === "user");
 
   // Calculate duration (time between first and last message)
   const duration =
     conversation.messages.length > 0
-      ? (conversation.messages[conversation.messages.length - 1].timestamp.getTime() -
+      ? (conversation.messages.at(-1).timestamp.getTime() -
           conversation.messages[0].timestamp.getTime()) /
         1000
       : 0;
@@ -207,7 +228,8 @@ function calculateConversationStats(conversation: Conversation): ConversationSta
 
   // Count errors from feedback
   const errorCount = userMessages.reduce((count, message) => {
-    const errors = message.feedback?.filter((f) => f.severity === 'error').length || 0;
+    const errors =
+      message.feedback?.filter((f) => f.severity === "error").length || 0;
     return count + errors;
   }, 0);
 

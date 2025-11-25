@@ -52,11 +52,11 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
         initialChatModel={chatModel}
         initialLastContext={chat.lastContext ?? undefined}
         initialMessages={uiMessages}
+        initialScenarioData={chat.scenarioData}
+        initialTargetLanguage={chat.targetLanguage}
+        // Language Coach fields - pass from existing chat data
         initialVisibilityType={chat.visibility}
         isReadonly={session?.user?.id !== chat.userId}
-        // Language Coach fields - pass from existing chat data
-        initialTargetLanguage={chat.targetLanguage}
-        initialScenarioData={chat.scenarioData}
       />
       <DataStreamHandler />
     </>

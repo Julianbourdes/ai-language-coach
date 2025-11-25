@@ -5,16 +5,16 @@
  * Simplified version that works with the template's MultimodalInput
  */
 
-import { useState, useRef, useCallback } from "react";
-import { Mic, Square, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import { Loader2, Mic, Square } from "lucide-react";
+import { useCallback, useRef, useState } from "react";
 import type RecordRTC from "recordrtc";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
-interface VoiceRecorderButtonProps {
+type VoiceRecorderButtonProps = {
   onTranscription: (transcription: string) => void;
   disabled?: boolean;
-}
+};
 
 export function VoiceRecorderButton({
   onTranscription,
@@ -41,7 +41,7 @@ export function VoiceRecorderButton({
         mimeType: "audio/wav",
         recorderType: RecordRTCClass.StereoAudioRecorder,
         numberOfAudioChannels: 1,
-        desiredSampRate: 16000,
+        desiredSampRate: 16_000,
       });
 
       recorder.startRecording();
@@ -67,11 +67,13 @@ export function VoiceRecorderButton({
   }, []);
 
   const stopRecording = useCallback(async () => {
-    if (!recorderRef.current) return;
+    if (!recorderRef.current) {
+      return;
+    }
 
     return new Promise<void>((resolve) => {
-      recorderRef.current!.stopRecording(async () => {
-        const blob = recorderRef.current!.getBlob();
+      recorderRef.current?.stopRecording(async () => {
+        const blob = recorderRef.current?.getBlob();
 
         // Stop all tracks
         if (streamRef.current) {
@@ -128,15 +130,13 @@ export function VoiceRecorderButton({
 
   return (
     <Button
-      type="button"
-      onClick={handleClick}
-      disabled={disabled || isTranscribing}
-      variant="ghost"
       className={`aspect-square h-8 rounded-lg p-1 transition-colors ${
         isRecording
           ? "bg-red-100 text-red-600 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
           : "hover:bg-accent"
       }`}
+      disabled={disabled || isTranscribing}
+      onClick={handleClick}
       title={
         isTranscribing
           ? "Transcribing..."
@@ -144,15 +144,17 @@ export function VoiceRecorderButton({
             ? "Stop recording"
             : "Start voice recording"
       }
+      type="button"
+      variant="ghost"
     >
       {isTranscribing ? (
         <Loader2 className="h-4 w-4 animate-spin" />
       ) : isRecording ? (
         <div className="relative">
           <Square className="h-4 w-4" fill="currentColor" />
-          <span className="absolute -top-1 -right-1 flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+          <span className="-top-1 -right-1 absolute flex h-2 w-2">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
           </span>
         </div>
       ) : (

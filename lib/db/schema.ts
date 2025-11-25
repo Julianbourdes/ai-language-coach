@@ -25,7 +25,7 @@ export type User = InferSelectModel<typeof user>;
 export type TargetLanguage = "en" | "fr" | "es";
 
 // Language Coach: Scenario data stored in chat
-export interface ChatScenarioData {
+export type ChatScenarioData = {
   id: string;
   title: string;
   description: string;
@@ -37,7 +37,7 @@ export interface ChatScenarioData {
   focusAreas: string[];
   icon: string;
   tags: string[];
-}
+};
 
 export const chat = pgTable("Chat", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),

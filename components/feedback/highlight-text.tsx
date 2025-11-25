@@ -1,31 +1,40 @@
-'use client';
+"use client";
 
 /**
  * Component to display text with highlighted feedback segments
  */
 
-import { useState } from 'react';
-import type { LanguageFeedback } from '@/lib/types/language-coach';
-import { CorrectionTooltip } from './correction-tooltip';
+import { useState } from "react";
+import type { LanguageFeedback } from "@/lib/types/language-coach";
+import { CorrectionTooltip } from "./correction-tooltip";
 
 // Alias for backward compatibility
 type Feedback = LanguageFeedback;
 
-interface HighlightTextProps {
+type HighlightTextProps = {
   text: string;
   feedback: Feedback[];
   className?: string;
-}
+};
 
-interface TextSegment {
+type TextSegment = {
   text: string;
   feedback?: Feedback;
   index: number;
-}
+};
 
-export function HighlightText({ text, feedback, className = '' }: HighlightTextProps) {
-  const [selectedFeedback, setSelectedFeedback] = useState<Feedback | null>(null);
-  const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | null>(null);
+export function HighlightText({
+  text,
+  feedback,
+  className = "",
+}: HighlightTextProps) {
+  const [selectedFeedback, setSelectedFeedback] = useState<Feedback | null>(
+    null
+  );
+  const [tooltipPosition, setTooltipPosition] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
 
   // Create segments from text and feedback
   const segments = createTextSegments(text, feedback);
@@ -53,17 +62,25 @@ export function HighlightText({ text, feedback, className = '' }: HighlightTextP
         {segments.map((segment, idx) => {
           if (segment.feedback) {
             const severityClass = getSeverityClass(segment.feedback.severity);
+            const feedbackItem = segment.feedback;
 
             return (
-              <span
+              <button
+                className={`${severityClass} group relative cursor-pointer border-none bg-transparent p-0 font-inherit`}
                 key={idx}
-                className={`${severityClass} cursor-pointer relative group`}
-                onClick={(e) => handleSegmentClick(e, segment.feedback!)}
+                onClick={(e) => handleSegmentClick(e, feedbackItem)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    handleSegmentClick(e as unknown as React.MouseEvent, feedbackItem);
+                  }
+                }}
                 title="Click for details"
+                type="button"
               >
                 {segment.text}
-                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-current opacity-50 group-hover:opacity-100" />
-              </span>
+                <span className="absolute bottom-0 left-0 h-0.5 w-full bg-current opacity-50 group-hover:opacity-100" />
+              </button>
             );
           }
 
@@ -74,8 +91,8 @@ export function HighlightText({ text, feedback, className = '' }: HighlightTextP
       {selectedFeedback && tooltipPosition && (
         <CorrectionTooltip
           feedback={selectedFeedback}
-          position={tooltipPosition}
           onClose={handleCloseTooltip}
+          position={tooltipPosition}
         />
       )}
     </div>
@@ -91,7 +108,9 @@ function createTextSegments(text: string, feedback: Feedback[]): TextSegment[] {
   }
 
   // Sort feedback by start position
-  const sortedFeedback = [...feedback].sort((a, b) => a.startIndex - b.startIndex);
+  const sortedFeedback = [...feedback].sort(
+    (a, b) => a.startIndex - b.startIndex
+  );
 
   const segments: TextSegment[] = [];
   let currentIndex = 0;
@@ -131,13 +150,13 @@ function createTextSegments(text: string, feedback: Feedback[]): TextSegment[] {
  */
 function getSeverityClass(severity: string): string {
   switch (severity) {
-    case 'error':
-      return 'text-red-600 dark:text-red-400 font-medium';
-    case 'warning':
-      return 'text-yellow-600 dark:text-yellow-400';
-    case 'suggestion':
-      return 'text-blue-600 dark:text-blue-400';
+    case "error":
+      return "text-red-600 dark:text-red-400 font-medium";
+    case "warning":
+      return "text-yellow-600 dark:text-yellow-400";
+    case "suggestion":
+      return "text-blue-600 dark:text-blue-400";
     default:
-      return '';
+      return "";
   }
 }

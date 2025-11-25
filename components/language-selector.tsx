@@ -12,27 +12,27 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { LANGUAGES, type TargetLanguage } from "@/lib/types/language-coach";
 
-interface LanguageSelectorProps {
+type LanguageSelectorProps = {
   value: TargetLanguage;
   onChange: (language: TargetLanguage) => void;
   disabled?: boolean;
-}
+};
 
 export function LanguageSelector({
   value,
   onChange,
   disabled = false,
 }: LanguageSelectorProps) {
-  console.log('[LanguageSelector] Rendering with value:', value);
+  console.log("[LanguageSelector] Rendering with value:", value);
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          variant="outline"
-          size="sm"
           className="gap-2"
           disabled={disabled}
+          size="sm"
+          variant="outline"
         >
           <span className="text-lg">{LANGUAGES[value].flag}</span>
           <span className="hidden sm:inline">{LANGUAGES[value].name}</span>
@@ -44,17 +44,17 @@ export function LanguageSelector({
         <DropdownMenuSeparator />
         {(Object.keys(LANGUAGES) as TargetLanguage[]).map((lang) => (
           <DropdownMenuItem
+            className={value === lang ? "bg-accent" : ""}
             key={lang}
             onClick={() => {
-              console.log('[LanguageSelector] Changing language to:', lang);
+              console.log("[LanguageSelector] Changing language to:", lang);
               onChange(lang);
             }}
-            className={value === lang ? "bg-accent" : ""}
           >
             <span className="mr-2 text-lg">{LANGUAGES[lang].flag}</span>
             <span>{LANGUAGES[lang].name}</span>
             {value === lang && (
-              <span className="ml-auto text-xs text-muted-foreground">
+              <span className="ml-auto text-muted-foreground text-xs">
                 Active
               </span>
             )}

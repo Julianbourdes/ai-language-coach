@@ -2,11 +2,11 @@
  * Types for role-play scenarios
  */
 
-export type ScenarioCategory = 'interview' | 'business' | 'social' | 'casual';
+export type ScenarioCategory = "interview" | "business" | "social" | "casual";
 
-export type ScenarioDifficulty = 'beginner' | 'intermediate' | 'advanced';
+export type ScenarioDifficulty = "beginner" | "intermediate" | "advanced";
 
-export interface Scenario {
+export type Scenario = {
   id: string;
   title: string;
   description: string;
@@ -18,4 +18,4 @@ export interface Scenario {
   focusAreas: string[];
   icon: string;
   tags: string[];
-}
+};

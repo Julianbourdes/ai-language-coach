@@ -3,20 +3,21 @@ import { redirect } from "next/navigation";
 import { Chat } from "@/components/chat";
 import { DataStreamHandler } from "@/components/data-stream-handler";
 import { DEFAULT_CHAT_MODEL } from "@/lib/ai/models";
-import type { TargetLanguage, ChatScenarioData } from "@/lib/db/schema";
+import type { ChatScenarioData, TargetLanguage } from "@/lib/db/schema";
 import { generateUUID } from "@/lib/utils";
+// Load scenarios from JSON (server-side)
+import scenariosJson from "@/public/scenarios/default-scenarios.json" with {
+  type: "json",
+};
 import { auth } from "../(auth)/auth";
 
-// Load scenarios from JSON (server-side)
-import scenariosJson from "@/public/scenarios/default-scenarios.json";
-
-interface PageProps {
+type PageProps = {
   searchParams: Promise<{
     lang?: string;
     scenario?: string;
     coach?: string;
   }>;
-}
+};
 
 export default async function Page({ searchParams }: PageProps) {
   const session = await auth();
@@ -60,12 +61,12 @@ export default async function Page({ searchParams }: PageProps) {
         id={id}
         initialChatModel={chatModel}
         initialMessages={[]}
+        initialScenarioData={isCoachMode ? scenarioData : undefined}
+        initialTargetLanguage={isCoachMode ? targetLanguage : undefined}
         initialVisibilityType="private"
+        // Language Coach fields - only set if in coach mode
         isReadonly={false}
         key={id}
-        // Language Coach fields - only set if in coach mode
-        initialTargetLanguage={isCoachMode ? targetLanguage : undefined}
-        initialScenarioData={isCoachMode ? scenarioData : undefined}
       />
       <DataStreamHandler />
     </>

@@ -4,35 +4,55 @@
  * Compact feedback display for messages in chat
  */
 
+import { AlertCircle, CheckCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
-import { ChevronDown, ChevronUp, AlertCircle, CheckCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import type { FeedbackResponse, LanguageFeedback } from "@/lib/types/language-coach";
+import type {
+  FeedbackResponse,
+  LanguageFeedback,
+} from "@/lib/types/language-coach";
 import { HighlightText } from "./highlight-text";
 
-interface MessageFeedbackProps {
+type MessageFeedbackProps = {
   text: string;
   feedback: FeedbackResponse;
   className?: string;
-}
+};
 
-export function MessageFeedback({ text, feedback, className = "" }: MessageFeedbackProps) {
+export function MessageFeedback({
+  text,
+  feedback,
+  className = "",
+}: MessageFeedbackProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const errorCount = feedback.corrections.filter((c) => c.severity === "error").length;
-  const warningCount = feedback.corrections.filter((c) => c.severity === "warning").length;
-  const suggestionCount = feedback.corrections.filter((c) => c.severity === "suggestion").length;
+  const errorCount = feedback.corrections.filter(
+    (c) => c.severity === "error"
+  ).length;
+  const warningCount = feedback.corrections.filter(
+    (c) => c.severity === "warning"
+  ).length;
+  const suggestionCount = feedback.corrections.filter(
+    (c) => c.severity === "suggestion"
+  ).length;
 
   const hasIssues = feedback.corrections.length > 0;
 
   return (
     <div className={`rounded-lg border bg-muted/30 ${className}`}>
       {/* Header with score and toggle */}
-      <div
-        className="flex items-center justify-between p-3 cursor-pointer hover:bg-muted/50 transition-colors"
+      <button
+        className="flex w-full cursor-pointer items-center justify-between border-none bg-transparent p-3 text-left transition-colors hover:bg-muted/50"
         onClick={() => setIsExpanded(!isExpanded)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setIsExpanded(!isExpanded);
+          }
+        }}
+        type="button"
       >
         <div className="flex items-center gap-3">
           {hasIssues ? (
@@ -41,64 +61,67 @@ export function MessageFeedback({ text, feedback, className = "" }: MessageFeedb
             <CheckCircle className="h-4 w-4 text-green-600" />
           )}
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">
+            <span className="font-medium text-sm">
               Score: {feedback.overallScore}%
             </span>
-            <Progress
-              value={feedback.overallScore}
-              className="w-20 h-2"
-            />
+            <Progress className="h-2 w-20" value={feedback.overallScore} />
           </div>
           {hasIssues && (
             <div className="flex gap-1">
               {errorCount > 0 && (
-                <Badge variant="destructive" className="text-xs">
+                <Badge className="text-xs" variant="destructive">
                   {errorCount} error{errorCount > 1 ? "s" : ""}
                 </Badge>
               )}
               {warningCount > 0 && (
-                <Badge variant="secondary" className="text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                <Badge
+                  className="bg-yellow-100 text-xs text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                  variant="secondary"
+                >
                   {warningCount} warning{warningCount > 1 ? "s" : ""}
                 </Badge>
               )}
               {suggestionCount > 0 && (
-                <Badge variant="secondary" className="text-xs">
+                <Badge className="text-xs" variant="secondary">
                   {suggestionCount} tip{suggestionCount > 1 ? "s" : ""}
                 </Badge>
               )}
             </div>
           )}
         </div>
-        <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+        <div className="flex items-center">
           {isExpanded ? (
             <ChevronUp className="h-4 w-4" />
           ) : (
             <ChevronDown className="h-4 w-4" />
           )}
-        </Button>
-      </div>
+        </div>
+      </button>
 
       {/* Expanded content */}
       {isExpanded && (
-        <div className="border-t p-3 space-y-3">
+        <div className="space-y-3 border-t p-3">
           {/* Highlighted text */}
           <div className="rounded-lg bg-background p-3">
-            <HighlightText text={text} feedback={feedback.corrections} />
+            <HighlightText feedback={feedback.corrections} text={text} />
           </div>
 
           {/* Summary */}
           {feedback.summary && (
-            <p className="text-sm text-muted-foreground">{feedback.summary}</p>
+            <p className="text-muted-foreground text-sm">{feedback.summary}</p>
           )}
 
           {/* Corrections list */}
           {hasIssues && (
             <div className="space-y-2">
-              <p className="text-xs font-medium text-muted-foreground uppercase">
+              <p className="font-medium text-muted-foreground text-xs uppercase">
                 Corrections
               </p>
               {feedback.corrections.map((correction, index) => (
-                <CorrectionItem key={correction.id || index} correction={correction} />
+                <CorrectionItem
+                  correction={correction}
+                  key={correction.id || index}
+                />
               ))}
             </div>
           )}
@@ -117,22 +140,24 @@ function CorrectionItem({ correction }: { correction: LanguageFeedback }) {
 
   return (
     <div
-      className={`border-l-2 ${severityColors[correction.severity]} bg-background rounded-r-lg p-2 text-sm`}
+      className={`border-l-2 ${severityColors[correction.severity]} rounded-r-lg bg-background p-2 text-sm`}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="line-through text-muted-foreground">
+          <div className="mb-1 flex items-center gap-2">
+            <span className="text-muted-foreground line-through">
               {correction.original}
             </span>
             <span className="text-muted-foreground">→</span>
-            <span className="text-green-600 dark:text-green-400 font-medium">
+            <span className="font-medium text-green-600 dark:text-green-400">
               {correction.suggestion}
             </span>
           </div>
-          <p className="text-xs text-muted-foreground">{correction.explanation}</p>
+          <p className="text-muted-foreground text-xs">
+            {correction.explanation}
+          </p>
         </div>
-        <Badge variant="outline" className="text-xs capitalize shrink-0">
+        <Badge className="shrink-0 text-xs capitalize" variant="outline">
           {correction.type}
         </Badge>
       </div>

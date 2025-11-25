@@ -15,19 +15,22 @@ const filePartSchema = z.object({
 const partSchema = z.union([textPartSchema, filePartSchema]);
 
 // Language Coach: Scenario data schema
-const scenarioDataSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  description: z.string(),
-  category: z.string(),
-  difficulty: z.string(),
-  aiRole: z.string(),
-  systemPrompt: z.string(),
-  suggestedDuration: z.number(),
-  focusAreas: z.array(z.string()),
-  icon: z.string(),
-  tags: z.array(z.string()),
-}).nullable().optional();
+const scenarioDataSchema = z
+  .object({
+    id: z.string(),
+    title: z.string(),
+    description: z.string(),
+    category: z.string(),
+    difficulty: z.string(),
+    aiRole: z.string(),
+    systemPrompt: z.string(),
+    suggestedDuration: z.number(),
+    focusAreas: z.array(z.string()),
+    icon: z.string(),
+    tags: z.array(z.string()),
+  })
+  .nullable()
+  .optional();
 
 export const postRequestBodySchema = z.object({
   id: z.string().uuid(),
