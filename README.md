@@ -3,6 +3,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Built with Next.js](https://img.shields.io/badge/Next.js-15-black)](https://nextjs.org/)
 [![Powered by Vercel AI SDK](https://img.shields.io/badge/Vercel%20AI%20SDK-5.0-blue)](https://sdk.vercel.ai/)
+[![CI](https://github.com/Julianbourdes/ai-language-coach/actions/workflows/ci.yml/badge.svg)](https://github.com/Julianbourdes/ai-language-coach/actions/workflows/ci.yml)
+[![Release](https://github.com/Julianbourdes/ai-language-coach/actions/workflows/release.yml/badge.svg)](https://github.com/Julianbourdes/ai-language-coach/actions/workflows/release.yml)
 
 An AI-powered language learning application that helps you practice conversation in multiple languages with real-time feedback and role-play scenarios.
 
