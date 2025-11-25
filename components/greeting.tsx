@@ -13,7 +13,7 @@ export const Greeting = () => {
         initial={{ opacity: 0, y: 10 }}
         transition={{ delay: 0.5 }}
       >
-        Hello there!
+        Hi ! I'm CoachLangAI
       </motion.div>
       <motion.div
         animate={{ opacity: 1, y: 0 }}
@@ -22,7 +22,16 @@ export const Greeting = () => {
         initial={{ opacity: 0, y: 10 }}
         transition={{ delay: 0.6 }}
       >
-        How can I help you today?
+        Let's chat together and improve our language skills ! 
+      </motion.div>
+      <motion.div
+        animate={{ opacity: 1, y: 0 }}
+        className="text-lg text-zinc-500 md:text-2lg"
+        exit={{ opacity: 0, y: 10 }}
+        initial={{ opacity: 0, y: 10 }}
+        transition={{ delay: 0.6 }}
+      >
+        Use the microphone to speak or type your message below and let's talk
       </motion.div>
     </div>
   );
