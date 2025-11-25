@@ -71,9 +71,9 @@ export function VoiceRecorder({
     }
   }, [onError, setRecording]);
 
-  const stopRecording = useCallback(async () => {
+  const stopRecording = useCallback(() => {
     if (!recorderRef.current) {
-      return;
+      return Promise.resolve();
     }
 
     return new Promise<void>((resolve) => {
@@ -82,12 +82,21 @@ export function VoiceRecorder({
 
         // Stop all tracks
         if (streamRef.current) {
-          streamRef.current.getTracks().forEach((track) => track.stop());
+          for (const track of streamRef.current.getTracks()) {
+            track.stop();
+          }
           streamRef.current = null;
         }
 
         setIsRecording(false);
         setRecording(false);
+
+        if (!blob) {
+          onError?.("Failed to capture audio. Please try again.");
+          resolve();
+          return;
+        }
+
         setIsTranscribing(true);
         setTranscribing(true);
 

@@ -39,9 +39,12 @@ export function HighlightText({
   // Create segments from text and feedback
   const segments = createTextSegments(text, feedback);
 
-  const handleSegmentClick = (event: React.MouseEvent, feedback: Feedback) => {
+  const handleSegmentClick = (
+    event: React.MouseEvent,
+    feedbackItem: Feedback
+  ) => {
     event.preventDefault();
-    setSelectedFeedback(feedback);
+    setSelectedFeedback(feedbackItem);
 
     // Get position for tooltip
     const rect = (event.target as HTMLElement).getBoundingClientRect();
@@ -59,7 +62,7 @@ export function HighlightText({
   return (
     <div className={`relative ${className}`}>
       <div className="whitespace-pre-wrap">
-        {segments.map((segment, idx) => {
+        {segments.map((segment) => {
           if (segment.feedback) {
             const severityClass = getSeverityClass(segment.feedback.severity);
             const feedbackItem = segment.feedback;
@@ -67,12 +70,15 @@ export function HighlightText({
             return (
               <button
                 className={`${severityClass} group relative cursor-pointer border-none bg-transparent p-0 font-inherit`}
-                key={idx}
+                key={`feedback-${segment.index}`}
                 onClick={(e) => handleSegmentClick(e, feedbackItem)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
-                    handleSegmentClick(e as unknown as React.MouseEvent, feedbackItem);
+                    handleSegmentClick(
+                      e as unknown as React.MouseEvent,
+                      feedbackItem
+                    );
                   }
                 }}
                 title="Click for details"
@@ -84,7 +90,7 @@ export function HighlightText({
             );
           }
 
-          return <span key={idx}>{segment.text}</span>;
+          return <span key={`text-${segment.index}`}>{segment.text}</span>;
         })}
       </div>
 

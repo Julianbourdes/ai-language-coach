@@ -12,6 +12,9 @@ import type {
   Message,
 } from "@/types";
 
+// Regex pattern for word splitting (top-level for performance)
+const WORD_SPLIT_REGEX = /\s+/;
+
 type ConversationState = {
   // State
   currentConversation: Conversation | null;
@@ -214,16 +217,17 @@ function calculateConversationStats(
   const userMessages = conversation.messages.filter((m) => m.role === "user");
 
   // Calculate duration (time between first and last message)
+  const lastMessage = conversation.messages.at(-1);
+  const firstMessage = conversation.messages[0];
   const duration =
-    conversation.messages.length > 0
-      ? (conversation.messages.at(-1).timestamp.getTime() -
-          conversation.messages[0].timestamp.getTime()) /
+    lastMessage && firstMessage
+      ? (lastMessage.timestamp.getTime() - firstMessage.timestamp.getTime()) /
         1000
       : 0;
 
   // Count words in user messages
   const wordCount = userMessages.reduce((count, message) => {
-    return count + message.content.split(/\s+/).length;
+    return count + message.content.split(WORD_SPLIT_REGEX).length;
   }, 0);
 
   // Count errors from feedback

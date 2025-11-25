@@ -5,7 +5,7 @@
 import type { ChatScenarioData, TargetLanguage } from "@/lib/db/schema";
 
 // Re-export from schema for convenience
-export type { TargetLanguage, ChatScenarioData };
+export type { ChatScenarioData, TargetLanguage } from "@/lib/db/schema";
 
 /**
  * Language metadata with display information
