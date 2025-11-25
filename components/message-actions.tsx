@@ -1,13 +1,14 @@
 import equal from "fast-deep-equal";
-import { memo } from "react";
+import { Volume2, VolumeX, Loader2 } from "lucide-react";
+import { memo, useState, useCallback, useEffect } from "react";
 import { toast } from "sonner";
 import { useSWRConfig } from "swr";
 import { useCopyToClipboard } from "usehooks-ts";
 import type { Vote, TargetLanguage } from "@/lib/db/schema";
 import type { ChatMessage } from "@/lib/types";
+import { LANGUAGES } from "@/lib/types/language-coach";
 import { Action, Actions } from "./elements/actions";
 import { CopyIcon, PencilEditIcon, ThumbDownIcon, ThumbUpIcon } from "./icons";
-import { TTSButton } from "./tts-button";
 
 export function PureMessageActions({
   chatId,
@@ -26,6 +27,85 @@ export function PureMessageActions({
 }) {
   const { mutate } = useSWRConfig();
   const [_, copyToClipboard] = useCopyToClipboard();
+
+  // TTS state
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isTTSLoading, setIsTTSLoading] = useState(false);
+
+  // Cleanup TTS on unmount
+  useEffect(() => {
+    return () => {
+      if (typeof window !== "undefined" && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
+  // TTS Voice selection with premium keywords
+  const selectBestVoice = useCallback((langCode: string) => {
+    if (typeof window === "undefined") return null;
+    const voices = window.speechSynthesis.getVoices();
+    const langVoices = voices.filter((v) =>
+      v.lang.toLowerCase().startsWith(langCode.toLowerCase())
+    );
+    if (langVoices.length === 0) return null;
+
+    const premiumKeywords = ["premium", "enhanced", "neural", "natural", "google", "microsoft"];
+    const premiumVoice = langVoices.find((v) =>
+      premiumKeywords.some((k) => v.name.toLowerCase().includes(k))
+    );
+    if (premiumVoice) return premiumVoice;
+
+    const localVoice = langVoices.find((v) => v.localService);
+    return localVoice || langVoices[0];
+  }, []);
+
+  // TTS handler
+  const handleTTS = useCallback(() => {
+    if (typeof window === "undefined" || !window.speechSynthesis || !targetLanguage) return;
+
+    const textFromParts = message.parts
+      ?.filter((part) => part.type === "text")
+      .map((part) => part.text)
+      .join("\n")
+      .trim();
+
+    if (!textFromParts) return;
+
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+      return;
+    }
+
+    setIsTTSLoading(true);
+    const langConfig = LANGUAGES[targetLanguage];
+    const utterance = new SpeechSynthesisUtterance(textFromParts);
+    utterance.lang = langConfig.voiceLang;
+
+    const setVoiceAndSpeak = () => {
+      const voice = selectBestVoice(langConfig.voiceLang.split("-")[0]);
+      if (voice) utterance.voice = voice;
+      utterance.rate = 0.95;
+      utterance.pitch = 1;
+      utterance.onstart = () => {
+        setIsTTSLoading(false);
+        setIsSpeaking(true);
+      };
+      utterance.onend = () => setIsSpeaking(false);
+      utterance.onerror = () => {
+        setIsTTSLoading(false);
+        setIsSpeaking(false);
+      };
+      window.speechSynthesis.speak(utterance);
+    };
+
+    if (window.speechSynthesis.getVoices().length > 0) {
+      setVoiceAndSpeak();
+    } else {
+      window.speechSynthesis.onvoiceschanged = () => setVoiceAndSpeak();
+    }
+  }, [message.parts, targetLanguage, isSpeaking, selectBestVoice]);
 
   if (isLoading) {
     return null;
@@ -175,16 +255,18 @@ export function PureMessageActions({
       </Action>
 
       {/* TTS Button for Language Coach mode */}
-      {targetLanguage && textFromParts && (
+      {targetLanguage && (
         <Action
-          asChild
-          tooltip="Read aloud"
+          onClick={handleTTS}
+          tooltip={isSpeaking ? "Stop speaking" : "Read aloud"}
         >
-          <TTSButton
-            text={textFromParts}
-            language={targetLanguage}
-            size="icon"
-          />
+          {isTTSLoading ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : isSpeaking ? (
+            <VolumeX className="size-4" />
+          ) : (
+            <Volume2 className="size-4" />
+          )}
         </Action>
       )}
     </Actions>
