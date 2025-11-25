@@ -66,9 +66,9 @@ export function VoiceRecorderButton({
     }
   }, []);
 
-  const stopRecording = useCallback(async () => {
+  const stopRecording = useCallback(() => {
     if (!recorderRef.current) {
-      return;
+      return Promise.resolve();
     }
 
     return new Promise<void>((resolve) => {
@@ -77,11 +77,20 @@ export function VoiceRecorderButton({
 
         // Stop all tracks
         if (streamRef.current) {
-          streamRef.current.getTracks().forEach((track) => track.stop());
+          for (const track of streamRef.current.getTracks()) {
+            track.stop();
+          }
           streamRef.current = null;
         }
 
         setIsRecording(false);
+
+        if (!blob) {
+          toast.error("Failed to capture audio. Please try again.");
+          resolve();
+          return;
+        }
+
         setIsTranscribing(true);
 
         try {

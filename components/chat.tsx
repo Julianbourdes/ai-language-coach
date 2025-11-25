@@ -172,6 +172,10 @@ export function Chat({
   // Wrapper for sendMessage that also requests feedback in Language Coach mode
   const sendMessage = useCallback(
     async (message: Parameters<typeof baseSendMessage>[0]) => {
+      if (!message) {
+        return;
+      }
+
       // Get the message ID - it should be passed from multimodal-input
       const messageId = (message as ChatMessage).id;
       console.log("[Chat] sendMessage called with messageId:", messageId);
@@ -179,9 +183,12 @@ export function Chat({
       baseSendMessage(message);
 
       // In Language Coach mode, request feedback for user messages
-      if (isLanguageCoachMode && message.role === "user") {
+      if (isLanguageCoachMode && "role" in message && message.role === "user") {
         // Get the text content from the message parts
-        const textPart = message.parts.find((p) => p.type === "text");
+        const textPart =
+          "parts" in message
+            ? message.parts.find((p) => p.type === "text")
+            : null;
         if (textPart && "text" in textPart) {
           console.log("[Chat] Requesting feedback for messageId:", messageId);
           try {

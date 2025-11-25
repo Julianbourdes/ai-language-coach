@@ -281,8 +281,8 @@ const PurePreviewMessage = ({
               );
             }
 
-            // Language Coach: Render language feedback
-            if (type === "language-feedback") {
+            // Language Coach: Render language feedback (custom part type)
+            if ((type as string) === "language-feedback") {
               const feedbackPart = part as unknown as LanguageFeedbackPart;
               // Find the text content from this message to display with feedback
               const textPart = message.parts.find((p) => p.type === "text");

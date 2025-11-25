@@ -8,7 +8,7 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { Globe, List, Loader2, Send, Volume2, VolumeX } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useConversationStore } from "@/lib/store/conversation-store";
 import {
@@ -37,11 +37,11 @@ export function LanguageCoachChat() {
   const [_voicesLoaded, setVoicesLoaded] = useState(false);
 
   const {
-    currentConversation,
-    addMessage,
-    updateMessage,
-    addFeedback,
-    isProcessing,
+    currentConversation: _currentConversation,
+    addMessage: _addMessage,
+    updateMessage: _updateMessage,
+    addFeedback: _addFeedback,
+    isProcessing: _isProcessing,
   } = useConversationStore();
   const { selectedScenario, targetLanguage, setTargetLanguage } =
     useScenarioStore();
@@ -96,7 +96,7 @@ export function LanguageCoachChat() {
   }, []);
 
   // Helper function to select the best voice for a language
-  const selectBestVoice = (langCode: string) => {
+  const selectBestVoice = useCallback((langCode: string) => {
     if (typeof window === "undefined") {
       return null;
     }
@@ -142,7 +142,7 @@ export function LanguageCoachChat() {
 
     // Return any matching voice
     return langVoices[0] || null;
-  };
+  }, []);
 
   // TTS: Speak assistant messages when they finish streaming
   useEffect(() => {
@@ -158,6 +158,9 @@ export function LanguageCoachChat() {
 
     if (hasNewMessage && streamingComplete && assistantMessages.length > 0) {
       const latestMessage = assistantMessages.at(-1);
+      if (!latestMessage) {
+        return;
+      }
       const textContent =
         latestMessage.parts
           ?.map((part: any) => part.type === "text" && part.text)
@@ -189,7 +192,7 @@ export function LanguageCoachChat() {
   }, [messages, status, ttsEnabled, targetLanguage, selectBestVoice]);
 
   // Handle voice transcription
-  const handleVoiceTranscription = async (
+  const handleVoiceTranscription = (
     transcription: string,
     _audioUrl?: string
   ) => {

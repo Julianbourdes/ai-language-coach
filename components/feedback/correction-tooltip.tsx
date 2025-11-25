@@ -61,15 +61,17 @@ export function CorrectionTooltip({
   return (
     <>
       {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-40 bg-black/20"
+      <button
+        aria-label="Close tooltip"
+        className="fixed inset-0 z-40 border-none bg-black/20"
         onClick={onClose}
         onKeyDown={(e) => {
-          if (e.key === "Escape") onClose();
+          if (e.key === "Escape") {
+            onClose();
+          }
         }}
-        role="button"
         tabIndex={0}
-        aria-label="Close tooltip"
+        type="button"
       />
 
       {/* Tooltip */}
@@ -92,10 +94,10 @@ export function CorrectionTooltip({
             </span>
           </div>
           <button
-            type="button"
             aria-label="Close"
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
             onClick={onClose}
+            type="button"
           >
             <X className="h-4 w-4" />
           </button>

@@ -263,7 +263,7 @@ function PureMultimodalInput({
         const uploadPromises = imageItems.map((item) => {
           const file = item.getAsFile();
           if (!file) {
-            return;
+            return Promise.resolve(undefined);
           }
           return uploadFile(file);
         });

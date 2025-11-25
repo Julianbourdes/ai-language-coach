@@ -45,6 +45,10 @@
       "a11y": {
         /* Needs more work to fix */
         "noSvgWithoutTitle": "off"
+      },
+      "performance": {
+        /* Barrel files are intentional for re-exports */
+        "noBarrelFile": "off"
       }
     }
   }

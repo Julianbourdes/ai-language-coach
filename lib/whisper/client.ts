@@ -56,7 +56,7 @@ export class WhisperClient {
         // whisper.cpp CLI outputs directly to stdout
         command = `${this.executable} -m "${this.model}" -nt "${tempFile}"`;
 
-        const { stdout, stderr } = await execAsync(command, {
+        const { stdout } = await execAsync(command, {
           timeout: 30_000, // 30 second timeout
           maxBuffer: 10 * 1024 * 1024, // 10MB buffer
         });
@@ -113,12 +113,15 @@ export class WhisperClient {
     try {
       if (this.isWhisperCpp()) {
         // whisper-cli --help returns 0
-        const { stdout } = await execAsync(`${this.executable} -h`, {
-          timeout: 5000,
-        });
-        return stdout.includes("usage");
+        const { stdout: helpOutput } = await execAsync(
+          `${this.executable} -h`,
+          {
+            timeout: 5000,
+          }
+        );
+        return helpOutput.includes("usage");
       }
-      const { stdout } = await execAsync(`${this.executable} --version`, {
+      await execAsync(`${this.executable} --version`, {
         timeout: 5000,
       });
       return true;
