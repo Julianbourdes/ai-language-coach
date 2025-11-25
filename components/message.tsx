@@ -24,7 +24,6 @@ import { MessageActions } from "./message-actions";
 import { MessageEditor } from "./message-editor";
 import { MessageReasoning } from "./message-reasoning";
 import { PreviewAttachment } from "./preview-attachment";
-import { TTSButton } from "./tts-button";
 import { Weather } from "./weather";
 
 // Type for language feedback part
@@ -150,16 +149,6 @@ const PurePreviewMessage = ({
                     >
                       <Response>{sanitizeText(part.text)}</Response>
                     </MessageContent>
-                    {/* TTS Button for assistant messages in Language Coach mode */}
-                    {message.role === "assistant" && targetLanguage && part.text && (
-                      <div className="mt-1 flex items-center">
-                        <TTSButton
-                          text={part.text}
-                          language={targetLanguage}
-                          size="sm"
-                        />
-                      </div>
-                    )}
                   </div>
                 );
               }
@@ -314,6 +303,7 @@ const PurePreviewMessage = ({
               key={`action-${message.id}`}
               message={message}
               setMode={setMode}
+              targetLanguage={targetLanguage}
               vote={vote}
             />
           )}
