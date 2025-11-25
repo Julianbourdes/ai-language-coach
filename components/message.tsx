@@ -132,7 +132,7 @@ const PurePreviewMessage = ({
             if (type === "text") {
               if (mode === "view") {
                 return (
-                  <div key={key}>
+                  <div key={key} className={cn({"flex justify-end" : message.role === "user"})}>
                     <MessageContent
                       className={cn({
                         "w-fit break-words rounded-2xl px-3 py-2 text-right text-white":

@@ -82,8 +82,8 @@ export function Chat({
   const targetLanguageRef = useRef(targetLanguage);
   const scenarioDataRef = useRef(scenarioData);
 
-  // Determine if we're in Language Coach mode
-  const isLanguageCoachMode = initialTargetLanguage !== undefined && initialTargetLanguage !== null;
+  // Language Coach mode is always active
+  const isLanguageCoachMode = true;
 
   useEffect(() => {
     currentModelIdRef.current = currentModelId;

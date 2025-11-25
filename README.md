@@ -1,4 +1,4 @@
-# AI Language Coach
+# AI Language Coach - CoachLangAI
 
 An AI-powered language learning application that helps you practice conversation in multiple languages with real-time feedback and role-play scenarios.
 
