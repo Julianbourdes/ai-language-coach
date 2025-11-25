@@ -10,6 +10,8 @@ An AI-powered language learning application that helps you practice conversation
 
 > **Note**: This project is built on top of [Vercel's AI Chatbot template](https://github.com/vercel/ai-chatbot) and extends it with language learning features.
 
+![CoachLang_AI.png](https://backend.julianbourdes.com/uploads/Coach_Lang_AI_demo_5b92ee2a27.png)
+
 ## ✨ Features
 
 - 🎤 **Voice Recording**: Practice speaking with automatic speech-to-text transcription (Whisper)
