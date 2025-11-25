@@ -2,7 +2,7 @@
  * Hook to avoid hydration mismatch with Zustand persist
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
 /**
  * Returns true only after component is mounted on client

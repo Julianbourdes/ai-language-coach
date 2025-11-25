@@ -1,10 +1,10 @@
 import equal from "fast-deep-equal";
-import { Volume2, VolumeX, Loader2 } from "lucide-react";
-import { memo, useState, useCallback, useEffect } from "react";
+import { Loader2, Volume2, VolumeX } from "lucide-react";
+import { memo, useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useSWRConfig } from "swr";
 import { useCopyToClipboard } from "usehooks-ts";
-import type { Vote, TargetLanguage } from "@/lib/db/schema";
+import type { TargetLanguage, Vote } from "@/lib/db/schema";
 import type { ChatMessage } from "@/lib/types";
 import { LANGUAGES } from "@/lib/types/language-coach";
 import { Action, Actions } from "./elements/actions";
@@ -43,18 +43,31 @@ export function PureMessageActions({
 
   // TTS Voice selection with premium keywords
   const selectBestVoice = useCallback((langCode: string) => {
-    if (typeof window === "undefined") return null;
+    if (typeof window === "undefined") {
+      return null;
+    }
     const voices = window.speechSynthesis.getVoices();
     const langVoices = voices.filter((v) =>
       v.lang.toLowerCase().startsWith(langCode.toLowerCase())
     );
-    if (langVoices.length === 0) return null;
+    if (langVoices.length === 0) {
+      return null;
+    }
 
-    const premiumKeywords = ["premium", "enhanced", "neural", "natural", "google", "microsoft"];
+    const premiumKeywords = [
+      "premium",
+      "enhanced",
+      "neural",
+      "natural",
+      "google",
+      "microsoft",
+    ];
     const premiumVoice = langVoices.find((v) =>
       premiumKeywords.some((k) => v.name.toLowerCase().includes(k))
     );
-    if (premiumVoice) return premiumVoice;
+    if (premiumVoice) {
+      return premiumVoice;
+    }
 
     const localVoice = langVoices.find((v) => v.localService);
     return localVoice || langVoices[0];
@@ -62,7 +75,13 @@ export function PureMessageActions({
 
   // TTS handler
   const handleTTS = useCallback(() => {
-    if (typeof window === "undefined" || !window.speechSynthesis || !targetLanguage) return;
+    if (
+      typeof window === "undefined" ||
+      !window.speechSynthesis ||
+      !targetLanguage
+    ) {
+      return;
+    }
 
     const textFromParts = message.parts
       ?.filter((part) => part.type === "text")
@@ -70,7 +89,9 @@ export function PureMessageActions({
       .join("\n")
       .trim();
 
-    if (!textFromParts) return;
+    if (!textFromParts) {
+      return;
+    }
 
     if (isSpeaking) {
       window.speechSynthesis.cancel();
@@ -85,7 +106,9 @@ export function PureMessageActions({
 
     const setVoiceAndSpeak = () => {
       const voice = selectBestVoice(langConfig.voiceLang.split("-")[0]);
-      if (voice) utterance.voice = voice;
+      if (voice) {
+        utterance.voice = voice;
+      }
       utterance.rate = 0.95;
       utterance.pitch = 1;
       utterance.onstart = () => {

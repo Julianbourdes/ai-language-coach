@@ -80,12 +80,7 @@
     "aiRole": "Non-technical stakeholder at your company",
     "systemPrompt": "You are a business stakeholder who doesn't have a technical background. Ask questions about technical implementations, but focus on understanding the business impact, timeline, and costs. If you hear jargon, ask for simpler explanations. Request analogies to help you understand complex concepts. Focus on practical implications.",
     "suggestedDuration": 15,
-    "focusAreas": [
-      "clarity",
-      "analogies",
-      "simplification",
-      "avoiding-jargon"
-    ],
+    "focusAreas": ["clarity", "analogies", "simplification", "avoiding-jargon"],
     "icon": "💡",
     "tags": ["business", "communication", "teaching"]
   }

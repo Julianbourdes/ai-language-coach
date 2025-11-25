@@ -4,17 +4,17 @@
  * Text-to-Speech button component for reading messages aloud
  */
 
-import { useState, useCallback, useEffect, useRef } from "react";
-import { Volume2, VolumeX, Loader2 } from "lucide-react";
+import { Loader2, Volume2, VolumeX } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { LANGUAGES, type TargetLanguage } from "@/lib/types/language-coach";
 
-interface TTSButtonProps {
+type TTSButtonProps = {
   text: string;
   language: TargetLanguage;
   disabled?: boolean;
   size?: "default" | "sm" | "icon";
-}
+};
 
 export function TTSButton({
   text,
@@ -37,33 +37,50 @@ export function TTSButton({
 
   // Select the best voice for the language
   const selectBestVoice = useCallback((langCode: string) => {
-    if (typeof window === "undefined") return null;
+    if (typeof window === "undefined") {
+      return null;
+    }
 
     const voices = window.speechSynthesis.getVoices();
     const langVoices = voices.filter((v) =>
       v.lang.toLowerCase().startsWith(langCode.toLowerCase())
     );
 
-    if (langVoices.length === 0) return null;
+    if (langVoices.length === 0) {
+      return null;
+    }
 
     // Priority: Premium/Enhanced voices > Local voices > Any voice
     // Include google and microsoft as they often have higher quality voices
-    const premiumKeywords = ["premium", "enhanced", "neural", "natural", "google", "microsoft"];
+    const premiumKeywords = [
+      "premium",
+      "enhanced",
+      "neural",
+      "natural",
+      "google",
+      "microsoft",
+    ];
     const premiumVoice = langVoices.find((v) =>
       premiumKeywords.some((k) => v.name.toLowerCase().includes(k))
     );
 
-    if (premiumVoice) return premiumVoice;
+    if (premiumVoice) {
+      return premiumVoice;
+    }
 
     // Prefer local voices
     const localVoice = langVoices.find((v) => v.localService);
-    if (localVoice) return localVoice;
+    if (localVoice) {
+      return localVoice;
+    }
 
     return langVoices[0];
   }, []);
 
   const handleSpeak = useCallback(() => {
-    if (typeof window === "undefined" || !window.speechSynthesis) return;
+    if (typeof window === "undefined" || !window.speechSynthesis) {
+      return;
+    }
 
     // If already speaking, stop
     if (isSpeaking) {
@@ -118,21 +135,22 @@ export function TTSButton({
     }
   }, [text, language, isSpeaking, selectBestVoice]);
 
-  const buttonSize = size === "sm" ? "h-6 w-6" : size === "icon" ? "h-8 w-8" : "";
+  const buttonSize =
+    size === "sm" ? "h-6 w-6" : size === "icon" ? "h-8 w-8" : "";
 
   return (
     <Button
-      type="button"
-      onClick={handleSpeak}
-      disabled={disabled || !text}
-      variant="ghost"
-      size="icon"
       className={`${buttonSize} transition-colors ${
         isSpeaking
           ? "text-primary hover:text-primary/80"
           : "text-muted-foreground hover:text-foreground"
       }`}
+      disabled={disabled || !text}
+      onClick={handleSpeak}
+      size="icon"
       title={isSpeaking ? "Stop speaking" : "Read aloud"}
+      type="button"
+      variant="ghost"
     >
       {isLoading ? (
         <Loader2 className="h-4 w-4 animate-spin" />

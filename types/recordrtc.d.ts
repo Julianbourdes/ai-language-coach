@@ -3,15 +3,15 @@
  * This avoids TypeScript errors when using dynamic import
  */
 
-declare module 'recordrtc' {
-  export interface RecordRTCOptions {
-    type?: 'audio' | 'video' | 'canvas' | 'gif';
+declare module "recordrtc" {
+  export type RecordRTCOptions = {
+    type?: "audio" | "video" | "canvas" | "gif";
     mimeType?: string;
     recorderType?: any;
     numberOfAudioChannels?: number;
     desiredSampRate?: number;
     [key: string]: any;
-  }
+  };
 
   export default class RecordRTC {
     constructor(stream: MediaStream, options?: RecordRTCOptions);

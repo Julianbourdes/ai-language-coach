@@ -3,28 +3,31 @@
  * Supports whisper.cpp CLI (whisper-cli)
  */
 
-import { exec } from 'child_process';
-import { promisify } from 'util';
-import { writeFile, unlink } from 'fs/promises';
-import path from 'path';
-import os from 'os';
+import { exec } from "node:child_process";
+import { unlink, writeFile } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
+import { promisify } from "node:util";
 
 const execAsync = promisify(exec);
 
-const WHISPER_EXECUTABLE = process.env.WHISPER_EXECUTABLE_PATH || 'whisper';
-const WHISPER_MODEL = process.env.WHISPER_MODEL || 'small';
+const WHISPER_EXECUTABLE = process.env.WHISPER_EXECUTABLE_PATH || "whisper";
+const WHISPER_MODEL = process.env.WHISPER_MODEL || "small";
 
-export interface TranscriptionResult {
+export type TranscriptionResult = {
   text: string;
   language?: string;
   duration?: number;
-}
+};
 
 export class WhisperClient {
   private readonly executable: string;
   private readonly model: string;
 
-  constructor(executable: string = WHISPER_EXECUTABLE, model: string = WHISPER_MODEL) {
+  constructor(
+    executable: string = WHISPER_EXECUTABLE,
+    model: string = WHISPER_MODEL
+  ) {
     this.executable = executable;
     this.model = model;
   }
@@ -33,7 +36,7 @@ export class WhisperClient {
    * Detect if using whisper.cpp (whisper-cli) or OpenAI whisper
    */
   private isWhisperCpp(): boolean {
-    return this.executable.includes('whisper-cli');
+    return this.executable.includes("whisper-cli");
   }
 
   /**
@@ -54,7 +57,7 @@ export class WhisperClient {
         command = `${this.executable} -m "${this.model}" -nt "${tempFile}"`;
 
         const { stdout, stderr } = await execAsync(command, {
-          timeout: 30000, // 30 second timeout
+          timeout: 30_000, // 30 second timeout
           maxBuffer: 10 * 1024 * 1024, // 10MB buffer
         });
 
@@ -68,13 +71,13 @@ export class WhisperClient {
         command = `${this.executable} "${tempFile}" --model ${this.model} --output_format txt --output_dir ${os.tmpdir()}`;
 
         await execAsync(command, {
-          timeout: 30000,
+          timeout: 30_000,
         });
 
         // Read the output file
-        const outputFile = tempFile.replace('.wav', '.txt');
-        const fs = await import('fs/promises');
-        text = await fs.readFile(outputFile, 'utf-8');
+        const outputFile = tempFile.replace(".wav", ".txt");
+        const fs = await import("node:fs/promises");
+        text = await fs.readFile(outputFile, "utf-8");
 
         // Clean up temp files
         await this.cleanup(tempFile, outputFile);
@@ -98,7 +101,7 @@ export class WhisperClient {
    * Alternative: Transcribe from file path
    */
   async transcribeFile(filePath: string): Promise<TranscriptionResult> {
-    const fs = await import('fs/promises');
+    const fs = await import("node:fs/promises");
     const buffer = await fs.readFile(filePath);
     return this.transcribe(buffer);
   }
@@ -113,15 +116,14 @@ export class WhisperClient {
         const { stdout } = await execAsync(`${this.executable} -h`, {
           timeout: 5000,
         });
-        return stdout.includes('usage');
-      } else {
-        const { stdout } = await execAsync(`${this.executable} --version`, {
-          timeout: 5000,
-        });
-        return true;
+        return stdout.includes("usage");
       }
+      const { stdout } = await execAsync(`${this.executable} --version`, {
+        timeout: 5000,
+      });
+      return true;
     } catch (error) {
-      console.error('Whisper health check failed:', error);
+      console.error("Whisper health check failed:", error);
       return false;
     }
   }
@@ -133,7 +135,7 @@ export class WhisperClient {
     for (const file of files) {
       try {
         await unlink(file);
-      } catch (error) {
+      } catch (_error) {
         // Ignore cleanup errors
       }
     }

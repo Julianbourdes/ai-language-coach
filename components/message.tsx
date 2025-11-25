@@ -3,7 +3,7 @@ import type { UseChatHelpers } from "@ai-sdk/react";
 import equal from "fast-deep-equal";
 import { motion } from "framer-motion";
 import { memo, useState } from "react";
-import type { Vote, TargetLanguage } from "@/lib/db/schema";
+import type { TargetLanguage, Vote } from "@/lib/db/schema";
 import type { ChatMessage, FeedbackResponse } from "@/lib/types";
 import { cn, sanitizeText } from "@/lib/utils";
 import { useDataStream } from "./data-stream-provider";
@@ -27,10 +27,10 @@ import { PreviewAttachment } from "./preview-attachment";
 import { Weather } from "./weather";
 
 // Type for language feedback part
-interface LanguageFeedbackPart {
+type LanguageFeedbackPart = {
   type: "language-feedback";
   data: FeedbackResponse;
-}
+};
 
 const PurePreviewMessage = ({
   chatId,
@@ -132,7 +132,12 @@ const PurePreviewMessage = ({
             if (type === "text") {
               if (mode === "view") {
                 return (
-                  <div key={key} className={cn({"flex justify-end" : message.role === "user"})}>
+                  <div
+                    className={cn({
+                      "flex justify-end": message.role === "user",
+                    })}
+                    key={key}
+                  >
                     <MessageContent
                       className={cn({
                         "w-fit break-words rounded-2xl px-3 py-2 text-right text-white":
@@ -281,14 +286,15 @@ const PurePreviewMessage = ({
               const feedbackPart = part as unknown as LanguageFeedbackPart;
               // Find the text content from this message to display with feedback
               const textPart = message.parts.find((p) => p.type === "text");
-              const messageText = textPart && "text" in textPart ? textPart.text : "";
+              const messageText =
+                textPart && "text" in textPart ? textPart.text : "";
 
               return (
                 <MessageFeedback
+                  className="mt-2"
+                  feedback={feedbackPart.data}
                   key={key}
                   text={messageText}
-                  feedback={feedbackPart.data}
-                  className="mt-2"
                 />
               );
             }
@@ -358,12 +364,9 @@ export const ThinkingMessage = () => {
         </div>
 
         <div className="flex w-full flex-col gap-2 md:gap-4">
-          <div className="p-0 text-muted-foreground text-sm">
-            Thinking...
-          </div>
+          <div className="p-0 text-muted-foreground text-sm">Thinking...</div>
         </div>
       </div>
     </motion.div>
   );
 };
-

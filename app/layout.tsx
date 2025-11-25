@@ -9,7 +9,8 @@ import { SessionProvider } from "next-auth/react";
 export const metadata: Metadata = {
   metadataBase: new URL("https://github.com/Julianbourdes/ai-language-coach"),
   title: "CoachLangAI - AI Language Coach",
-  description: "Practice your language skills with an AI-powered coach. Support for English, French, and Spanish.",
+  description:
+    "Practice your language skills with an AI-powered coach. Support for English, French, and Spanish.",
 };
 
 export const viewport = {

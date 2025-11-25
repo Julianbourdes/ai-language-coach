@@ -1,26 +1,30 @@
-'use client';
+"use client";
 
 /**
  * Main Language Coach Chat Component
  * Integrates voice recording, AI chat, and feedback highlighting
  */
 
-import { useState, useEffect, useRef } from 'react';
-import { useChat } from '@ai-sdk/react';
-import { DefaultChatTransport } from 'ai';
-import { VoiceRecorder } from './voice/voice-recorder';
-import { HighlightText } from './feedback/highlight-text';
-import { FeedbackPanel } from './feedback/feedback-panel';
-import { ScenariosModal } from './scenarios/scenarios-modal';
-import { Button } from './ui/button';
-import { useConversationStore } from '@/lib/store/conversation-store';
-import { useScenarioStore, LANGUAGES, type Language } from '@/lib/store/scenario-store';
-import { Loader2, Send, List, Volume2, VolumeX, Globe } from 'lucide-react';
-import { toast } from 'sonner';
-import type { Feedback } from '@/types';
+import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport } from "ai";
+import { Globe, List, Loader2, Send, Volume2, VolumeX } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
+import { useConversationStore } from "@/lib/store/conversation-store";
+import {
+  LANGUAGES,
+  type Language,
+  useScenarioStore,
+} from "@/lib/store/scenario-store";
+import type { Feedback } from "@/types";
+import { FeedbackPanel } from "./feedback/feedback-panel";
+import { HighlightText } from "./feedback/highlight-text";
+import { ScenariosModal } from "./scenarios/scenarios-modal";
+import { Button } from "./ui/button";
+import { VoiceRecorder } from "./voice/voice-recorder";
 
 export function LanguageCoachChat() {
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const [showScenarios, setShowScenarios] = useState(false);
   const [ttsEnabled, setTtsEnabled] = useState(false);
   const [currentFeedback, setCurrentFeedback] = useState<{
@@ -30,15 +34,23 @@ export function LanguageCoachChat() {
   } | null>(null);
 
   const lastMessageCountRef = useRef(0);
-  const [voicesLoaded, setVoicesLoaded] = useState(false);
+  const [_voicesLoaded, setVoicesLoaded] = useState(false);
 
-  const { currentConversation, addMessage, updateMessage, addFeedback, isProcessing } =
-    useConversationStore();
-  const { selectedScenario, targetLanguage, setTargetLanguage } = useScenarioStore();
+  const {
+    currentConversation,
+    addMessage,
+    updateMessage,
+    addFeedback,
+    isProcessing,
+  } = useConversationStore();
+  const { selectedScenario, targetLanguage, setTargetLanguage } =
+    useScenarioStore();
 
   // Load voices on mount (browsers load voices asynchronously)
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") {
+      return;
+    }
 
     const loadVoices = () => {
       const voices = window.speechSynthesis.getVoices();
@@ -51,44 +63,48 @@ export function LanguageCoachChat() {
     loadVoices();
 
     // Also listen for voiceschanged event (Chrome, Edge)
-    window.speechSynthesis.addEventListener('voiceschanged', loadVoices);
+    window.speechSynthesis.addEventListener("voiceschanged", loadVoices);
 
     return () => {
-      window.speechSynthesis.removeEventListener('voiceschanged', loadVoices);
+      window.speechSynthesis.removeEventListener("voiceschanged", loadVoices);
     };
   }, []);
 
   // Use Vercel AI SDK's useChat hook
   // ID changes with language to maintain separate conversations per language
   const { messages, sendMessage, status } = useChat({
-    id: `coach-${targetLanguage}-${selectedScenario?.id || 'free'}`,
+    id: `coach-${targetLanguage}-${selectedScenario?.id || "free"}`,
     transport: new DefaultChatTransport({
-      api: '/api/ollama',
+      api: "/api/ollama",
       body: {
         scenario: selectedScenario,
-        targetLanguage: targetLanguage,
+        targetLanguage,
       },
     }),
     onError: (error) => {
-      console.error('Chat error:', error);
-      toast.error('Failed to send message. Please ensure Ollama is running.');
+      console.error("Chat error:", error);
+      toast.error("Failed to send message. Please ensure Ollama is running.");
     },
   });
 
   // Derived loading state
-  const isLoading = status === 'streaming' || status === 'submitted';
+  const isLoading = status === "streaming" || status === "submitted";
 
   // Reset message count when language changes
   useEffect(() => {
     lastMessageCountRef.current = 0;
-  }, [targetLanguage, selectedScenario]);
+  }, []);
 
   // Helper function to select the best voice for a language
   const selectBestVoice = (langCode: string) => {
-    if (typeof window === 'undefined') return null;
+    if (typeof window === "undefined") {
+      return null;
+    }
 
     const voices = window.speechSynthesis.getVoices();
-    if (voices.length === 0) return null;
+    if (voices.length === 0) {
+      return null;
+    }
 
     // Priority order for voice selection:
     // 1. Enhanced/Premium voices (often marked with specific keywords)
@@ -96,18 +112,33 @@ export function LanguageCoachChat() {
     // 3. Local voices (better performance)
     // 4. Any voice matching the language
 
-    const langVoices = voices.filter((voice) => voice.lang.startsWith(langCode));
+    const langVoices = voices.filter((voice) =>
+      voice.lang.startsWith(langCode)
+    );
 
     // Look for premium/enhanced voices first
-    const premiumKeywords = ['premium', 'enhanced', 'neural', 'natural', 'google', 'microsoft'];
+    const premiumKeywords = [
+      "premium",
+      "enhanced",
+      "neural",
+      "natural",
+      "google",
+      "microsoft",
+    ];
     const premiumVoice = langVoices.find((voice) =>
-      premiumKeywords.some((keyword) => voice.name.toLowerCase().includes(keyword))
+      premiumKeywords.some((keyword) =>
+        voice.name.toLowerCase().includes(keyword)
+      )
     );
-    if (premiumVoice) return premiumVoice;
+    if (premiumVoice) {
+      return premiumVoice;
+    }
 
     // Prefer local voices for better performance
     const localVoice = langVoices.find((voice) => voice.localService);
-    if (localVoice) return localVoice;
+    if (localVoice) {
+      return localVoice;
+    }
 
     // Return any matching voice
     return langVoices[0] || null;
@@ -115,20 +146,23 @@ export function LanguageCoachChat() {
 
   // TTS: Speak assistant messages when they finish streaming
   useEffect(() => {
-    if (!ttsEnabled || typeof window === 'undefined') return;
+    if (!ttsEnabled || typeof window === "undefined") {
+      return;
+    }
 
     // Check if a new assistant message has been added and streaming is complete
-    const assistantMessages = messages.filter((m) => m.role === 'assistant');
-    const hasNewMessage = assistantMessages.length > lastMessageCountRef.current;
-    const streamingComplete = status !== 'streaming' && status !== 'submitted';
+    const assistantMessages = messages.filter((m) => m.role === "assistant");
+    const hasNewMessage =
+      assistantMessages.length > lastMessageCountRef.current;
+    const streamingComplete = status !== "streaming" && status !== "submitted";
 
     if (hasNewMessage && streamingComplete && assistantMessages.length > 0) {
-      const latestMessage = assistantMessages[assistantMessages.length - 1];
+      const latestMessage = assistantMessages.at(-1);
       const textContent =
         latestMessage.parts
-          ?.map((part: any) => part.type === 'text' && part.text)
+          ?.map((part: any) => part.type === "text" && part.text)
           .filter(Boolean)
-          .join('') || '';
+          .join("") || "";
 
       if (textContent.trim()) {
         // Use Web Speech API to speak the text
@@ -137,7 +171,7 @@ export function LanguageCoachChat() {
         utterance.lang = langCode;
 
         // Select the best available voice
-        const bestVoice = selectBestVoice(langCode.split('-')[0]);
+        const bestVoice = selectBestVoice(langCode.split("-")[0]);
         if (bestVoice) {
           utterance.voice = bestVoice;
         }
@@ -152,28 +186,33 @@ export function LanguageCoachChat() {
 
       lastMessageCountRef.current = assistantMessages.length;
     }
-  }, [messages, status, ttsEnabled, targetLanguage]);
+  }, [messages, status, ttsEnabled, targetLanguage, selectBestVoice]);
 
   // Handle voice transcription
-  const handleVoiceTranscription = async (transcription: string, audioUrl?: string) => {
+  const handleVoiceTranscription = async (
+    transcription: string,
+    _audioUrl?: string
+  ) => {
     if (!transcription.trim()) {
-      toast.error('No speech detected. Please try again.');
+      toast.error("No speech detected. Please try again.");
       return;
     }
 
     // Set transcription in input field for user review
     setInput(transcription);
-    toast.success('Transcription complete. Review and press send.');
+    toast.success("Transcription complete. Review and press send.");
   };
 
   // Handle text input
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!input.trim() || isLoading) return;
+    if (!input.trim() || isLoading) {
+      return;
+    }
 
     const userMessage = input;
-    setInput('');
+    setInput("");
 
     // Add user message
     sendMessage({ text: userMessage });
@@ -185,19 +224,19 @@ export function LanguageCoachChat() {
   // Request feedback for user message
   const requestFeedback = async (text: string) => {
     try {
-      const response = await fetch('/api/feedback', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           text,
           context: selectedScenario?.title,
-          userLevel: 'intermediate',
-          targetLanguage: targetLanguage,
+          userLevel: "intermediate",
+          targetLanguage,
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to get feedback');
+        throw new Error("Failed to get feedback");
       }
 
       const data = await response.json();
@@ -211,7 +250,7 @@ export function LanguageCoachChat() {
         });
       }
     } catch (error) {
-      console.error('Feedback error:', error);
+      console.error("Feedback error:", error);
       // Don't show error toast for feedback - it's optional
     }
   };
@@ -224,14 +263,14 @@ export function LanguageCoachChat() {
     <>
       <div className="flex h-screen bg-background">
         {/* Main Chat Area */}
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex min-w-0 flex-1 flex-col">
           {/* Header */}
-          <div className="border-b bg-white dark:bg-gray-900 p-4 shrink-0">
-            <div className="flex items-center justify-between max-w-4xl mx-auto">
+          <div className="shrink-0 border-b bg-white p-4 dark:bg-gray-900">
+            <div className="mx-auto flex max-w-4xl items-center justify-between">
               <div>
-                <h1 className="text-xl font-semibold">AI Language Coach</h1>
+                <h1 className="font-semibold text-xl">AI Language Coach</h1>
                 {selectedScenario && (
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-gray-600 text-sm dark:text-gray-400">
                     {selectedScenario.icon} {selectedScenario.title}
                   </p>
                 )}
@@ -239,9 +278,11 @@ export function LanguageCoachChat() {
               <div className="flex gap-2">
                 <div className="relative">
                   <select
+                    className="cursor-pointer appearance-none rounded-md border border-gray-300 bg-white py-2 pr-8 pl-9 text-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
+                    onChange={(e) =>
+                      setTargetLanguage(e.target.value as Language)
+                    }
                     value={targetLanguage}
-                    onChange={(e) => setTargetLanguage(e.target.value as Language)}
-                    className="appearance-none pl-9 pr-8 py-2 text-sm rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
                   >
                     {Object.entries(LANGUAGES).map(([code, lang]) => (
                       <option key={code} value={code}>
@@ -249,14 +290,14 @@ export function LanguageCoachChat() {
                       </option>
                     ))}
                   </select>
-                  <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
+                  <Globe className="-translate-y-1/2 pointer-events-none absolute top-1/2 left-3 h-4 w-4 text-gray-500" />
                 </div>
                 <Button
-                  variant="outline"
                   onClick={() => setShowScenarios(true)}
                   size="sm"
+                  variant="outline"
                 >
-                  <List className="h-4 w-4 mr-2" />
+                  <List className="mr-2 h-4 w-4" />
                   Scenarios
                 </Button>
               </div>
@@ -265,24 +306,26 @@ export function LanguageCoachChat() {
 
           {/* Messages Area */}
           <div className="flex-1 overflow-y-auto p-4">
-            <div className="max-w-4xl mx-auto space-y-4">
+            <div className="mx-auto max-w-4xl space-y-4">
               {messages.length === 0 && (
-                <div className="text-center py-12">
-                  <div className="text-6xl mb-4">👋</div>
-                  <h2 className="text-2xl font-semibold mb-2">Welcome to AI Language Coach!</h2>
-                  <p className="text-gray-600 dark:text-gray-400 mb-4">
+                <div className="py-12 text-center">
+                  <div className="mb-4 text-6xl">👋</div>
+                  <h2 className="mb-2 font-semibold text-2xl">
+                    Welcome to AI Language Coach!
+                  </h2>
+                  <p className="mb-4 text-gray-600 dark:text-gray-400">
                     {selectedScenario
                       ? `You're practicing: ${selectedScenario.title}`
-                      : 'Start practicing your English conversation skills'}
+                      : "Start practicing your English conversation skills"}
                   </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-500 mb-4">
+                  <p className="mb-4 text-gray-500 text-sm dark:text-gray-500">
                     Use the microphone to speak or type your message below
                   </p>
                   <Button
-                    variant="outline"
                     onClick={() => setShowScenarios(true)}
+                    variant="outline"
                   >
-                    <List className="h-4 w-4 mr-2" />
+                    <List className="mr-2 h-4 w-4" />
                     Choose a Scenario
                   </Button>
                 </div>
@@ -290,27 +333,31 @@ export function LanguageCoachChat() {
 
               {messages.map((message) => {
                 // Extract text content from message parts
-                const textContent = message.parts
-                  ?.map((part: any) => part.type === 'text' && part.text)
-                  .filter(Boolean)
-                  .join('') || '';
+                const textContent =
+                  message.parts
+                    ?.map((part: any) => part.type === "text" && part.text)
+                    .filter(Boolean)
+                    .join("") || "";
 
                 return (
                   <div
+                    className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
                     key={message.id}
-                    className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
                     <div
                       className={`max-w-[80%] rounded-lg p-4 ${
-                        message.role === 'user'
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-gray-100 dark:bg-gray-800'
+                        message.role === "user"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-gray-100 dark:bg-gray-800"
                       }`}
                     >
-                      {message.role === 'user' &&
+                      {message.role === "user" &&
                       currentFeedback?.messageText === textContent &&
                       currentFeedback.feedback.length > 0 ? (
-                        <HighlightText text={textContent} feedback={currentFeedback.feedback} />
+                        <HighlightText
+                          feedback={currentFeedback.feedback}
+                          text={textContent}
+                        />
                       ) : (
                         <p className="whitespace-pre-wrap">{textContent}</p>
                       )}
@@ -321,7 +368,7 @@ export function LanguageCoachChat() {
 
               {isLoading && (
                 <div className="flex justify-start">
-                  <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4">
+                  <div className="rounded-lg bg-gray-100 p-4 dark:bg-gray-800">
                     <Loader2 className="h-5 w-5 animate-spin" />
                   </div>
                 </div>
@@ -330,21 +377,25 @@ export function LanguageCoachChat() {
           </div>
 
           {/* Input Area */}
-          <div className="border-t bg-white dark:bg-gray-900 p-4 shrink-0">
-            <div className="max-w-4xl mx-auto">
-              <form onSubmit={handleSubmit} className="flex gap-2">
+          <div className="shrink-0 border-t bg-white p-4 dark:bg-gray-900">
+            <div className="mx-auto max-w-4xl">
+              <form className="flex gap-2" onSubmit={handleSubmit}>
                 <VoiceRecorder
-                  onTranscription={handleVoiceTranscription}
-                  onError={handleError}
                   disabled={isLoading}
+                  onError={handleError}
+                  onTranscription={handleVoiceTranscription}
                 />
 
                 <Button
-                  type="button"
-                  variant={ttsEnabled ? 'default' : 'outline'}
-                  size="icon"
                   onClick={() => setTtsEnabled(!ttsEnabled)}
-                  title={ttsEnabled ? 'Disable text-to-speech' : 'Enable text-to-speech'}
+                  size="icon"
+                  title={
+                    ttsEnabled
+                      ? "Disable text-to-speech"
+                      : "Enable text-to-speech"
+                  }
+                  type="button"
+                  variant={ttsEnabled ? "default" : "outline"}
                 >
                   {ttsEnabled ? (
                     <Volume2 className="h-4 w-4" />
@@ -354,15 +405,19 @@ export function LanguageCoachChat() {
                 </Button>
 
                 <input
-                  type="text"
-                  value={input}
+                  className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary dark:border-gray-700 dark:bg-gray-800"
+                  disabled={isLoading}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder="Type your message or use the microphone..."
-                  className="flex-1 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary"
-                  disabled={isLoading}
+                  type="text"
+                  value={input}
                 />
 
-                <Button type="submit" disabled={!input.trim() || isLoading} size="icon">
+                <Button
+                  disabled={!input.trim() || isLoading}
+                  size="icon"
+                  type="submit"
+                >
                   {isLoading ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
@@ -371,7 +426,7 @@ export function LanguageCoachChat() {
                 </Button>
               </form>
 
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
+              <p className="mt-2 text-center text-gray-500 text-xs dark:text-gray-400">
                 Speak naturally and get instant feedback on your English
               </p>
             </div>
@@ -380,7 +435,7 @@ export function LanguageCoachChat() {
 
         {/* Right Sidebar - Feedback Panel */}
         {currentFeedback && currentFeedback.feedback.length > 0 && (
-          <div className="w-96 border-l bg-gray-50 dark:bg-gray-900 overflow-y-auto shrink-0">
+          <div className="w-96 shrink-0 overflow-y-auto border-l bg-gray-50 dark:bg-gray-900">
             <div className="p-4">
               <FeedbackPanel
                 feedback={currentFeedback.feedback}

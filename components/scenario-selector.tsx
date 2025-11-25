@@ -1,7 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { BookOpen, Clock, X } from "lucide-react";
+import { Clock } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,22 +18,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-} from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { ChatScenarioData } from "@/lib/db/schema";
 
-interface ScenarioSelectorProps {
+type ScenarioSelectorProps = {
   value: ChatScenarioData | null;
   onChange: (scenario: ChatScenarioData | null) => void;
   disabled?: boolean;
-}
+};
 
 const DIFFICULTY_COLORS: Record<string, string> = {
   beginner: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
@@ -39,19 +39,16 @@ export function ScenarioSelector({
   onChange,
   disabled = false,
 }: ScenarioSelectorProps) {
-  console.log('[ScenarioSelector] Rendering with value:', value?.title || 'Free Conversation');
+  console.log(
+    "[ScenarioSelector] Rendering with value:",
+    value?.title || "Free Conversation"
+  );
 
   const [isOpen, setIsOpen] = useState(false);
   const [scenarios, setScenarios] = useState<ChatScenarioData[]>([]);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (isOpen && scenarios.length === 0) {
-      loadScenarios();
-    }
-  }, [isOpen, scenarios.length]);
-
-  async function loadScenarios() {
+  const loadScenarios = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch("/scenarios/default-scenarios.json");
@@ -62,36 +59,42 @@ export function ScenarioSelector({
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    if (isOpen && scenarios.length === 0) {
+      loadScenarios();
+    }
+  }, [isOpen, scenarios.length, loadScenarios]);
 
   function handleSelect(scenario: ChatScenarioData) {
-    console.log('[ScenarioSelector] Selecting scenario:', scenario.title);
+    console.log("[ScenarioSelector] Selecting scenario:", scenario.title);
     onChange(scenario);
     setIsOpen(false);
   }
 
-  function handleClear() {
-    console.log('[ScenarioSelector] Clearing scenario');
+  function _handleClear() {
+    console.log("[ScenarioSelector] Clearing scenario");
     onChange(null);
   }
 
   return (
     <>
       <Button
-        variant="outline"
-        size="sm"
         className="gap-2"
-        onClick={() => setIsOpen(true)}
         disabled={disabled}
+        onClick={() => setIsOpen(true)}
+        size="sm"
+        variant="outline"
       >
         <span className="text-lg">{value ? value.icon : "💬"}</span>
-        <span className="hidden sm:inline max-w-[150px] truncate">
+        <span className="hidden max-w-[150px] truncate sm:inline">
           {value ? value.title : "Free Conversation"}
         </span>
       </Button>
 
-      <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
-        <AlertDialogContent className="max-w-3xl max-h-[80vh]">
+      <AlertDialog onOpenChange={setIsOpen} open={isOpen}>
+        <AlertDialogContent className="max-h-[80vh] max-w-3xl">
           <AlertDialogHeader>
             <AlertDialogTitle>Choose a Practice Scenario</AlertDialogTitle>
             <AlertDialogDescription>
@@ -103,14 +106,14 @@ export function ScenarioSelector({
           <ScrollArea className="h-[50vh] pr-4">
             {loading ? (
               <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <div className="h-8 w-8 animate-spin rounded-full border-primary border-b-2" />
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 {/* Free conversation option */}
                 <Card
                   className={`cursor-pointer transition-all hover:shadow-md ${
-                    !value ? "ring-2 ring-primary" : ""
+                    value ? "" : "ring-2 ring-primary"
                   }`}
                   onClick={() => {
                     onChange(null);
@@ -120,7 +123,9 @@ export function ScenarioSelector({
                   <CardHeader className="pb-2">
                     <div className="flex items-center gap-2">
                       <span className="text-2xl">💬</span>
-                      <CardTitle className="text-lg">Free Conversation</CardTitle>
+                      <CardTitle className="text-lg">
+                        Free Conversation
+                      </CardTitle>
                     </div>
                     <CardDescription>
                       Practice natural conversation without a specific scenario
@@ -134,37 +139,43 @@ export function ScenarioSelector({
                 {/* Scenario cards */}
                 {scenarios.map((scenario) => (
                   <Card
-                    key={scenario.id}
                     className={`cursor-pointer transition-all hover:shadow-md ${
                       value?.id === scenario.id ? "ring-2 ring-primary" : ""
                     }`}
+                    key={scenario.id}
                     onClick={() => handleSelect(scenario)}
                   >
                     <CardHeader className="pb-2">
                       <div className="flex items-center gap-2">
                         <span className="text-2xl">{scenario.icon}</span>
-                        <CardTitle className="text-lg">{scenario.title}</CardTitle>
+                        <CardTitle className="text-lg">
+                          {scenario.title}
+                        </CardTitle>
                       </div>
                       <CardDescription className="line-clamp-2">
                         {scenario.description}
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <div className="flex flex-wrap gap-2 items-center">
+                      <div className="flex flex-wrap items-center gap-2">
                         <Badge
                           className={DIFFICULTY_COLORS[scenario.difficulty]}
                           variant="secondary"
                         >
                           {scenario.difficulty}
                         </Badge>
-                        <div className="flex items-center text-xs text-muted-foreground">
-                          <Clock className="h-3 w-3 mr-1" />
+                        <div className="flex items-center text-muted-foreground text-xs">
+                          <Clock className="mr-1 h-3 w-3" />
                           {scenario.suggestedDuration} min
                         </div>
                       </div>
-                      <div className="flex flex-wrap gap-1 mt-2">
+                      <div className="mt-2 flex flex-wrap gap-1">
                         {scenario.focusAreas.slice(0, 3).map((area) => (
-                          <Badge key={area} variant="outline" className="text-xs">
+                          <Badge
+                            className="text-xs"
+                            key={area}
+                            variant="outline"
+                          >
                             {area.replace(/-/g, " ")}
                           </Badge>
                         ))}
@@ -176,8 +187,8 @@ export function ScenarioSelector({
             )}
           </ScrollArea>
 
-          <div className="flex justify-end gap-2 mt-4">
-            <Button variant="outline" onClick={() => setIsOpen(false)}>
+          <div className="mt-4 flex justify-end gap-2">
+            <Button onClick={() => setIsOpen(false)} variant="outline">
               Cancel
             </Button>
           </div>

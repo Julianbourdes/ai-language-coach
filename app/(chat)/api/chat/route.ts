@@ -37,7 +37,11 @@ import {
   saveMessages,
   updateChatLastContextById,
 } from "@/lib/db/queries";
-import type { ChatScenarioData, DBMessage, TargetLanguage } from "@/lib/db/schema";
+import type {
+  ChatScenarioData,
+  DBMessage,
+  TargetLanguage,
+} from "@/lib/db/schema";
 import { ChatSDKError } from "@/lib/errors";
 import type { ChatMessage } from "@/lib/types";
 import type { AppUsage } from "@/lib/usage";

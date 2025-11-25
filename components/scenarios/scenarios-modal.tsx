@@ -1,33 +1,34 @@
-'use client';
+"use client";
 
 /**
  * Scenarios selection modal
  */
 
-import { useEffect, useState } from 'react';
-import { X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { ScenarioCard } from './scenario-card';
-import { useScenarioStore } from '@/lib/store/scenario-store';
-import type { Scenario } from '@/types';
+import { X } from "lucide-react";
+import { useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { useScenarioStore } from "@/lib/store/scenario-store";
+import type { Scenario } from "@/types";
+import { ScenarioCard } from "./scenario-card";
 
-interface ScenariosModalProps {
+type ScenariosModalProps = {
   isOpen: boolean;
   onClose: () => void;
-}
+};
 
 export function ScenariosModal({ isOpen, onClose }: ScenariosModalProps) {
-  const { scenarios, setScenarios, selectScenario, selectedScenario } = useScenarioStore();
+  const { scenarios, setScenarios, selectScenario, selectedScenario } =
+    useScenarioStore();
 
   useEffect(() => {
     // Load scenarios from JSON file
     const loadScenarios = async () => {
       try {
-        const response = await fetch('/scenarios/default-scenarios.json');
+        const response = await fetch("/scenarios/default-scenarios.json");
         const data = await response.json();
         setScenarios(data);
       } catch (error) {
-        console.error('Failed to load scenarios:', error);
+        console.error("Failed to load scenarios:", error);
       }
     };
 
@@ -41,47 +42,55 @@ export function ScenariosModal({ isOpen, onClose }: ScenariosModalProps) {
     onClose();
   };
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    return null;
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="relative w-full max-w-4xl max-h-[90vh] overflow-hidden bg-white dark:bg-gray-900 rounded-lg shadow-xl">
+      <div className="relative max-h-[90vh] w-full max-w-4xl overflow-hidden rounded-lg bg-white shadow-xl dark:bg-gray-900">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b">
+        <div className="flex items-center justify-between border-b p-6">
           <div>
-            <h2 className="text-2xl font-semibold">Choose a Practice Scenario</h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            <h2 className="font-semibold text-2xl">
+              Choose a Practice Scenario
+            </h2>
+            <p className="mt-1 text-gray-600 text-sm dark:text-gray-400">
               Select a scenario to practice specific conversation situations
             </p>
           </div>
           <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
             className="rounded-full"
+            onClick={onClose}
+            size="icon"
+            variant="ghost"
           >
             <X className="h-5 w-5" />
           </Button>
         </div>
 
         {/* Content */}
-        <div className="overflow-y-auto p-6" style={{ maxHeight: 'calc(90vh - 120px)' }}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div
+          className="overflow-y-auto p-6"
+          style={{ maxHeight: "calc(90vh - 120px)" }}
+        >
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {/* Free conversation option */}
             <button
+              className={`rounded-lg border-2 p-6 text-left transition-all hover:shadow-md ${
+                selectedScenario
+                  ? "border-gray-200 dark:border-gray-700"
+                  : "border-primary bg-primary/5"
+              }`}
               onClick={() => {
                 selectScenario(null);
                 onClose();
               }}
-              className={`text-left p-6 rounded-lg border-2 transition-all hover:shadow-md ${
-                !selectedScenario
-                  ? 'border-primary bg-primary/5'
-                  : 'border-gray-200 dark:border-gray-700'
-              }`}
+              type="button"
             >
-              <div className="text-4xl mb-3">💬</div>
-              <h3 className="text-lg font-semibold mb-2">Free Conversation</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <div className="mb-3 text-4xl">💬</div>
+              <h3 className="mb-2 font-semibold text-lg">Free Conversation</h3>
+              <p className="text-gray-600 text-sm dark:text-gray-400">
                 Practice open conversation without a specific scenario
               </p>
             </button>
@@ -89,10 +98,10 @@ export function ScenariosModal({ isOpen, onClose }: ScenariosModalProps) {
             {/* Scenario cards */}
             {scenarios.map((scenario) => (
               <ScenarioCard
-                key={scenario.id}
-                scenario={scenario}
                 isSelected={selectedScenario?.id === scenario.id}
+                key={scenario.id}
                 onClick={() => handleSelectScenario(scenario)}
+                scenario={scenario}
               />
             ))}
           </div>

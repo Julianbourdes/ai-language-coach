@@ -2,19 +2,22 @@
  * Zustand store for managing scenarios
  */
 
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import type { Scenario } from '@/types';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import type { Scenario } from "@/types";
 
-export type Language = 'en' | 'fr' | 'es';
+export type Language = "en" | "fr" | "es";
 
-export const LANGUAGES: Record<Language, { name: string; flag: string; voiceLang: string }> = {
-  en: { name: 'English', flag: '🇬🇧', voiceLang: 'en-US' },
-  fr: { name: 'Français', flag: '🇫🇷', voiceLang: 'fr-FR' },
-  es: { name: 'Español', flag: '🇪🇸', voiceLang: 'es-ES' },
+export const LANGUAGES: Record<
+  Language,
+  { name: string; flag: string; voiceLang: string }
+> = {
+  en: { name: "English", flag: "🇬🇧", voiceLang: "en-US" },
+  fr: { name: "Français", flag: "🇫🇷", voiceLang: "fr-FR" },
+  es: { name: "Español", flag: "🇪🇸", voiceLang: "es-ES" },
 };
 
-interface ScenarioState {
+type ScenarioState = {
   // State
   scenarios: Scenario[];
   selectedScenario: Scenario | null;
@@ -27,7 +30,7 @@ interface ScenarioState {
   addCustomScenario: (scenario: Scenario) => void;
   deleteScenario: (scenarioId: string) => void;
   getScenarioById: (scenarioId: string) => Scenario | undefined;
-}
+};
 
 export const useScenarioStore = create<ScenarioState>()(
   persist(
@@ -35,7 +38,7 @@ export const useScenarioStore = create<ScenarioState>()(
       // Initial state
       scenarios: [],
       selectedScenario: null,
-      targetLanguage: 'en' as Language,
+      targetLanguage: "en" as Language,
 
       // Set scenarios (typically loaded from JSON)
       setScenarios: (scenarios) => set({ scenarios }),
@@ -72,7 +75,7 @@ export const useScenarioStore = create<ScenarioState>()(
       },
     }),
     {
-      name: 'scenario-storage',
+      name: "scenario-storage",
     }
   )
 );

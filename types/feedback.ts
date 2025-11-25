@@ -2,11 +2,11 @@
  * Types for feedback and language corrections
  */
 
-export type FeedbackType = 'grammar' | 'vocabulary' | 'style';
+export type FeedbackType = "grammar" | "vocabulary" | "style";
 
-export type FeedbackSeverity = 'error' | 'warning' | 'suggestion';
+export type FeedbackSeverity = "error" | "warning" | "suggestion";
 
-export interface Feedback {
+export type Feedback = {
   id: string;
   type: FeedbackType;
   severity: FeedbackSeverity;
@@ -15,18 +15,18 @@ export interface Feedback {
   explanation: string;
   startIndex: number;
   endIndex: number;
-}
+};
 
-export interface FeedbackRequest {
+export type FeedbackRequest = {
   text: string;
   context?: string;
-  userLevel?: 'beginner' | 'intermediate' | 'advanced';
+  userLevel?: "beginner" | "intermediate" | "advanced";
   targetLanguage?: string;
-}
+};
 
-export interface FeedbackResponse {
+export type FeedbackResponse = {
   original: string;
   corrections: Feedback[];
   overallScore: number; // 0-100
   summary: string;
-}
+};

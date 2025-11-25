@@ -15,16 +15,16 @@ export async function blobToBuffer(blob: Blob): Promise<Buffer> {
  */
 export function isValidAudioFormat(blob: Blob): boolean {
   const validTypes = [
-    'audio/wav',
-    'audio/wave',
-    'audio/x-wav',
-    'audio/webm',
-    'audio/ogg',
-    'audio/mpeg',
-    'audio/mp4',
+    "audio/wav",
+    "audio/wave",
+    "audio/x-wav",
+    "audio/webm",
+    "audio/ogg",
+    "audio/mpeg",
+    "audio/mp4",
   ];
 
-  return validTypes.includes(blob.type) || blob.type.startsWith('audio/');
+  return validTypes.includes(blob.type) || blob.type.startsWith("audio/");
 }
 
 /**
@@ -32,33 +32,38 @@ export function isValidAudioFormat(blob: Blob): boolean {
  */
 export function getExtensionFromMimeType(mimeType: string): string {
   const mimeMap: Record<string, string> = {
-    'audio/wav': 'wav',
-    'audio/wave': 'wav',
-    'audio/x-wav': 'wav',
-    'audio/webm': 'webm',
-    'audio/ogg': 'ogg',
-    'audio/mpeg': 'mp3',
-    'audio/mp4': 'mp4',
+    "audio/wav": "wav",
+    "audio/wave": "wav",
+    "audio/x-wav": "wav",
+    "audio/webm": "webm",
+    "audio/ogg": "ogg",
+    "audio/mpeg": "mp3",
+    "audio/mp4": "mp4",
   };
 
-  return mimeMap[mimeType] || 'wav';
+  return mimeMap[mimeType] || "wav";
 }
 
 /**
  * Create WAV file header for PCM audio
  * This is a simplified version that assumes 16-bit mono audio at 16kHz
  */
-export function createWavHeader(dataLength: number, sampleRate = 16000, channels = 1, bitsPerSample = 16): Buffer {
+export function createWavHeader(
+  dataLength: number,
+  sampleRate = 16_000,
+  channels = 1,
+  bitsPerSample = 16
+): Buffer {
   const header = Buffer.alloc(44);
 
   // RIFF identifier
-  header.write('RIFF', 0);
+  header.write("RIFF", 0);
   // File length minus 8 bytes
   header.writeUInt32LE(36 + dataLength, 4);
   // WAVE identifier
-  header.write('WAVE', 8);
+  header.write("WAVE", 8);
   // fmt chunk identifier
-  header.write('fmt ', 12);
+  header.write("fmt ", 12);
   // fmt chunk length (16 for PCM)
   header.writeUInt32LE(16, 16);
   // Audio format (1 for PCM)
@@ -74,7 +79,7 @@ export function createWavHeader(dataLength: number, sampleRate = 16000, channels
   // Bits per sample
   header.writeUInt16LE(bitsPerSample, 34);
   // data chunk identifier
-  header.write('data', 36);
+  header.write("data", 36);
   // data chunk length
   header.writeUInt32LE(dataLength, 40);
 
@@ -103,7 +108,10 @@ export function audioBufferToWav(audioBuffer: AudioBuffer): Buffer {
     for (let channel = 0; channel < numberOfChannels; channel++) {
       const sample = audioBuffer.getChannelData(channel)[i];
       // Convert float to 16-bit PCM
-      const int16 = Math.max(-32768, Math.min(32767, Math.floor(sample * 32768)));
+      const int16 = Math.max(
+        -32_768,
+        Math.min(32_767, Math.floor(sample * 32_768))
+      );
       buffer.writeInt16LE(int16, offset);
       offset += 2;
     }

@@ -2,18 +2,21 @@
  * System prompts for different AI coaching modes
  */
 
-import type { Scenario } from '@/types';
+import type { Scenario } from "@/types";
 
-const LANGUAGE_NAMES: Record<string, { learningName: string; nativeName: string }> = {
-  en: { learningName: 'English', nativeName: 'French' },
-  fr: { learningName: 'French', nativeName: 'English' },
-  es: { learningName: 'Spanish', nativeName: 'English' },
+const LANGUAGE_NAMES: Record<
+  string,
+  { learningName: string; nativeName: string }
+> = {
+  en: { learningName: "English", nativeName: "French" },
+  fr: { learningName: "French", nativeName: "English" },
+  es: { learningName: "Spanish", nativeName: "English" },
 };
 
 /**
  * Base language coach prompt for general conversation
  */
-export function languageCoachPrompt(targetLanguage: string = 'en'): string {
+export function languageCoachPrompt(targetLanguage = "en"): string {
   const { learningName, nativeName } =
     LANGUAGE_NAMES[targetLanguage] || LANGUAGE_NAMES.en;
 
@@ -41,7 +44,7 @@ Remember: The goal is to build confidence and fluency through practice in ${lear
 /**
  * Prompt for analyzing text and generating feedback
  */
-export function feedbackAnalyzerPrompt(targetLanguage: string = 'en'): string {
+export function feedbackAnalyzerPrompt(targetLanguage = "en"): string {
   const { learningName, nativeName } =
     LANGUAGE_NAMES[targetLanguage] || LANGUAGE_NAMES.en;
 
@@ -89,7 +92,7 @@ Example format:
  */
 export function generateRolePlayPrompt(
   scenario: Scenario,
-  targetLanguage: string = 'en'
+  targetLanguage = "en"
 ): string {
   const { learningName } = LANGUAGE_NAMES[targetLanguage] || LANGUAGE_NAMES.en;
 
@@ -104,7 +107,7 @@ Your specific instructions:
 ${scenario.systemPrompt}
 
 Focus areas for this scenario:
-${scenario.focusAreas.map((area) => `- ${area}`).join('\n')}
+${scenario.focusAreas.map((area) => `- ${area}`).join("\n")}
 
 Stay in character and create a realistic, engaging conversation that helps the learner practice ${learningName} in this specific context.`;
 }

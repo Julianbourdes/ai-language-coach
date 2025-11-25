@@ -2,11 +2,14 @@
  * API route for chat with Ollama using Vercel AI SDK
  */
 
-import { NextRequest } from 'next/server';
-import { streamText, convertToModelMessages, type UIMessage } from 'ai';
-import { getLanguageModel, checkOllamaHealth } from '@/lib/ollama/client';
-import { languageCoachPrompt, generateRolePlayPrompt } from '@/lib/ollama/prompts';
-import type { Scenario } from '@/types';
+import { convertToModelMessages, streamText, type UIMessage } from "ai";
+import type { NextRequest } from "next/server";
+import { checkOllamaHealth, getLanguageModel } from "@/lib/ollama/client";
+import {
+  generateRolePlayPrompt,
+  languageCoachPrompt,
+} from "@/lib/ollama/prompts";
+import type { Scenario } from "@/types";
 
 export const maxDuration = 60;
 
@@ -20,14 +23,21 @@ export async function POST(request: NextRequest) {
     const {
       messages,
       scenario,
-      targetLanguage = 'en',
-    }: { messages: UIMessage[]; scenario?: Scenario; targetLanguage?: string } = body;
+      targetLanguage = "en",
+    }: {
+      messages: UIMessage[];
+      scenario?: Scenario;
+      targetLanguage?: string;
+    } = body;
 
     if (!messages || !Array.isArray(messages)) {
-      return new Response(JSON.stringify({ error: 'Invalid messages format' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return new Response(
+        JSON.stringify({ error: "Invalid messages format" }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
     }
 
     // Determine system prompt based on scenario and language
@@ -53,16 +63,16 @@ export async function POST(request: NextRequest) {
     // Return streaming response in UI format
     return result.toUIMessageStreamResponse();
   } catch (error) {
-    console.error('Ollama chat error:', error);
+    console.error("Ollama chat error:", error);
 
     return new Response(
       JSON.stringify({
-        error: 'Chat failed',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        error: "Chat failed",
+        details: error instanceof Error ? error.message : "Unknown error",
       }),
       {
         status: 500,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { "Content-Type": "application/json" },
       }
     );
   }
@@ -78,35 +88,34 @@ export async function GET() {
 
     if (isHealthy) {
       return new Response(
-        JSON.stringify({ status: 'healthy', service: 'ollama' }),
+        JSON.stringify({ status: "healthy", service: "ollama" }),
         {
           status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
-    } else {
-      return new Response(
-        JSON.stringify({
-          status: 'unhealthy',
-          service: 'ollama',
-          message: 'Ollama service is not available. Please run: ollama serve',
-        }),
-        {
-          status: 503,
-          headers: { 'Content-Type': 'application/json' },
+          headers: { "Content-Type": "application/json" },
         }
       );
     }
+    return new Response(
+      JSON.stringify({
+        status: "unhealthy",
+        service: "ollama",
+        message: "Ollama service is not available. Please run: ollama serve",
+      }),
+      {
+        status: 503,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
   } catch (error) {
     return new Response(
       JSON.stringify({
-        status: 'error',
-        service: 'ollama',
-        error: error instanceof Error ? error.message : 'Unknown error',
+        status: "error",
+        service: "ollama",
+        error: error instanceof Error ? error.message : "Unknown error",
       }),
       {
         status: 500,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { "Content-Type": "application/json" },
       }
     );
   }

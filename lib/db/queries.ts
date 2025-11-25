@@ -21,8 +21,8 @@ import type { AppUsage } from "../usage";
 import { generateUUID } from "../utils";
 import {
   type Chat,
-  chat,
   type ChatScenarioData,
+  chat,
   type DBMessage,
   document,
   message,
@@ -145,7 +145,7 @@ export async function deleteAllChatsByUserId({ userId }: { userId: string }) {
       return { deletedCount: 0 };
     }
 
-    const chatIds = userChats.map(c => c.id);
+    const chatIds = userChats.map((c) => c.id);
 
     await db.delete(vote).where(inArray(vote.chatId, chatIds));
     await db.delete(message).where(inArray(message.chatId, chatIds));

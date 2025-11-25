@@ -18,7 +18,7 @@ const LANGUAGE_NAMES: Record<
 /**
  * Base language coach prompt for general conversation
  */
-export function languageCoachPrompt(targetLanguage: string = "en"): string {
+export function languageCoachPrompt(targetLanguage = "en"): string {
   const { learningName, nativeName } =
     LANGUAGE_NAMES[targetLanguage] || LANGUAGE_NAMES.en;
 
@@ -46,7 +46,7 @@ Remember: The goal is to build confidence and fluency through practice in ${lear
 /**
  * Prompt for analyzing text and generating feedback
  */
-export function feedbackAnalyzerPrompt(targetLanguage: string = "en"): string {
+export function feedbackAnalyzerPrompt(targetLanguage = "en"): string {
   const { learningName, nativeName } =
     LANGUAGE_NAMES[targetLanguage] || LANGUAGE_NAMES.en;
 
@@ -94,7 +94,7 @@ Example format:
  */
 export function generateRolePlayPrompt(
   scenario: ChatScenarioData,
-  targetLanguage: string = "en"
+  targetLanguage = "en"
 ): string {
   const { learningName } = LANGUAGE_NAMES[targetLanguage] || LANGUAGE_NAMES.en;
 
