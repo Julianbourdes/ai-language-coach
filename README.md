@@ -1,8 +1,14 @@
-# AI Language Coach - CoachLangAI
+# CoachLangAI 🌍
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Built with Next.js](https://img.shields.io/badge/Next.js-15-black)](https://nextjs.org/)
+[![Powered by Vercel AI SDK](https://img.shields.io/badge/Vercel%20AI%20SDK-5.0-blue)](https://sdk.vercel.ai/)
 
 An AI-powered language learning application that helps you practice conversation in multiple languages with real-time feedback and role-play scenarios.
 
-## Features
+> **Note**: This project is built on top of [Vercel's AI Chatbot template](https://github.com/vercel/ai-chatbot) and extends it with language learning features.
+
+## ✨ Features
 
 - 🎤 **Voice Recording**: Practice speaking with automatic speech-to-text transcription (Whisper)
 - 💬 **AI Conversation**: Chat with a supportive AI language coach powered by Ollama
@@ -13,99 +19,100 @@ An AI-powered language learning application that helps you practice conversation
 - 📊 **Progress Tracking**: Monitor your improvement with scores and statistics
 - 🔒 **Privacy First**: Everything runs locally - no data sent to external servers
 
-## Prerequisites
+## 🚀 Quick Start
+
+### Prerequisites
 
 Before you begin, ensure you have the following installed:
 
 1. **Node.js 18+** and **pnpm**
-   ```bash
-   # Install pnpm if you don't have it
-   npm install -g pnpm
-   ```
-
 2. **Docker** (for PostgreSQL database)
-   ```bash
-   # macOS: Download Docker Desktop from docker.com
-   # Linux: Install via package manager
-   # Windows: Download Docker Desktop from docker.com
-   ```
-
 3. **Ollama** (for local AI)
-   ```bash
-   # macOS
-   brew install ollama
-
-   # Linux
-   curl -fsSL https://ollama.com/install.sh | sh
-
-   # Windows: Download from https://ollama.com/download
-   ```
-
 4. **Whisper** (for speech-to-text)
-   ```bash
-   # macOS (recommended: whisper.cpp)
-   brew install whisper-cpp
 
-   # Linux: Build from source
-   # https://github.com/ggerganov/whisper.cpp
-
-   # Alternative: Python whisper (slower, requires more RAM)
-   pip install openai-whisper
-   ```
-
-   **Important:** After installing whisper.cpp, you need to download a model:
-   ```bash
-   # Create models directory
-   mkdir -p models
-
-   # Download a model (base is recommended for balance of speed/accuracy)
-   # Options: tiny, base, small, medium, large
-   curl -L -o models/ggml-base.bin \
-     https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin
-   ```
-
-   Find your whisper executable path:
-   ```bash
-   # macOS with Homebrew
-   which whisper-cli  # Usually /opt/homebrew/bin/whisper-cli
-
-   # If using Python whisper
-   which whisper      # Usually /usr/local/bin/whisper
-   ```
-
-## Quick Start
-
-### 1. Install Dependencies
+### Installation
 
 ```bash
+# Clone the repository
+git clone https://github.com/Julianbourdes/ai-language-coach.git
+cd ai-language-coach
+
+# Install dependencies
 pnpm install
-```
 
-### 2. Set Up PostgreSQL & Redis (Required for auth)
-
-```bash
-# Using Docker (recommended)
+# Set up database
 docker compose up -d
-
-# Initialize database
 pnpm db:migrate
+
+# Configure environment
+cp .env.example .env.local
+# Edit .env.local with your configuration
+
+# Start Ollama and pull model
+ollama pull llama3.1:8b
+ollama serve
+
+# Run the application
+pnpm dev
 ```
 
-This will start both PostgreSQL (for user data) and Redis (for sessions). See [SETUP-DB.md](./SETUP-DB.md) for detailed instructions and alternatives.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-### 3. Set Up Ollama
+For detailed setup instructions, see the full documentation below.
+
+## 📚 Documentation
+
+- [Setup Guide](#prerequisites) - Detailed installation instructions
+- [Usage Guide](#usage) - How to use CoachLangAI
+- [Contributing](CONTRIBUTING.md) - How to contribute to the project
+- [Database Setup](SETUP-DB.md) - PostgreSQL and Redis configuration
+- [TTS Upgrade](docs/TTS-UPGRADE.md) - Installing better voices
+
+## 🛠️ Prerequisites
+
+### 1. Node.js and pnpm
 
 ```bash
-# Pull the language model (this may take a few minutes)
-ollama pull llama3.1:8b
-
-# Start Ollama server (keep this running)
-ollama serve
+# Install pnpm if you don't have it
+npm install -g pnpm
 ```
 
-### 4. Configure Environment
+### 2. Docker (for PostgreSQL)
 
-Create or update your `.env.local` file:
+Download Docker Desktop from [docker.com](https://www.docker.com/products/docker-desktop)
+
+### 3. Ollama (for AI)
+
+```bash
+# macOS
+brew install ollama
+
+# Linux
+curl -fsSL https://ollama.com/install.sh | sh
+
+# Windows: Download from https://ollama.com/download
+```
+
+### 4. Whisper (for speech-to-text)
+
+```bash
+# macOS (recommended: whisper.cpp)
+brew install whisper-cpp
+
+# Download a model
+mkdir -p models
+curl -L -o models/ggml-base.bin \
+  https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin
+```
+
+Find your whisper executable path:
+```bash
+which whisper-cli  # Usually /opt/homebrew/bin/whisper-cli
+```
+
+## ⚙️ Configuration
+
+Create `.env.local` file:
 
 ```bash
 # Database & Cache
@@ -116,145 +123,128 @@ REDIS_URL=redis://localhost:6379
 OLLAMA_BASE_URL=http://localhost:11434
 OLLAMA_MODEL=llama3.1:8b
 
-# Whisper - IMPORTANT: Update these paths for your system!
-# For whisper.cpp: Use full path to the model file
-WHISPER_MODEL=/path/to/your/project/models/ggml-base.bin
+# Whisper - Update these paths!
+WHISPER_MODEL=/path/to/your/models/ggml-base.bin
 WHISPER_EXECUTABLE_PATH=/opt/homebrew/bin/whisper-cli
 
-# For Python whisper: Use model name instead
-# WHISPER_MODEL=base
-# WHISPER_EXECUTABLE_PATH=/usr/local/bin/whisper
-
-# Auth Secret (generate your own or use this for local dev)
+# Auth Secret
 AUTH_SECRET="your-secret-key-here"
 ```
 
-**⚠️ Important:** You MUST update the Whisper configuration:
-- `WHISPER_MODEL`: Full path to your downloaded `.bin` model file (whisper.cpp) or model name (Python)
-- `WHISPER_EXECUTABLE_PATH`: Result of `which whisper-cli` or `which whisper`
+**⚠️ Important:** Update the Whisper paths to match your system.
 
-### 5. Run the Application
-
-```bash
-pnpm dev
-```
-
-Open [http://localhost:3000/coach](http://localhost:3000/coach) in your browser.
-
-## Usage
+## 📖 Usage
 
 ### Starting a Conversation
 
-1. **Free Conversation**: Go to `/coach` for free-form conversation
-2. **Scenario Practice**: Click "Scenarios" button to choose a role-play scenario
+1. Open [http://localhost:3000](http://localhost:3000)
+2. Select your target language (🇬🇧 English, 🇫🇷 French, 🇪🇸 Spanish)
+3. Choose a scenario or start a free conversation
+4. Use voice input 🎤 or text input to practice
 
-### Selecting Your Target Language
+### Voice Input
 
-Click the language selector (🌍) in the top right corner to choose:
-- 🇬🇧 **English** - Practice English
-- 🇫🇷 **Français** - Practice French
-- 🇪🇸 **Español** - Practice Spanish
-
-The AI will respond in your selected language and provide feedback tailored to that language.
-
-### Using Voice Input
-
-1. Click the microphone button (🎤)
-2. Allow microphone access when prompted
+1. Click the microphone button
+2. Allow microphone access
 3. Speak in your target language
-4. Click stop when finished
-5. Review the transcription in the input field
-6. Press send to submit your message
+4. Review transcription and send
 
 ### Text-to-Speech
 
-Click the volume button (🔊) to enable/disable text-to-speech:
-- When enabled: AI responses are automatically spoken aloud
-- The voice automatically adapts to your selected language
-- Uses the best available voice on your system
-
-See [TTS-UPGRADE.md](./docs/TTS-UPGRADE.md) for instructions on installing higher-quality voices.
+Click the speaker icon next to AI responses to hear them read aloud with natural pronunciation.
 
 ### Understanding Feedback
 
-Messages are automatically analyzed with issues highlighted:
-
-- 🔴 **Red (Error)**: Grammar mistakes to fix
-- 🟡 **Yellow (Warning)**: Correct but not idiomatic
+- 🔴 **Red (Error)**: Grammar mistakes
+- 🟡 **Yellow (Warning)**: Not idiomatic
 - 🔵 **Blue (Suggestion)**: Style improvements
 
-Click highlighted text to see detailed explanations. The feedback panel on the right shows your overall score and all corrections.
+Click highlighted text for detailed explanations.
 
-## Available Scenarios
+## 🎭 Available Scenarios
 
-1. **Engineering Manager Interview** - Practice leadership questions
-2. **Business Presentation** - Present to stakeholders
-3. **Casual Coffee Chat** - Informal conversation practice
-4. **Client Negotiation** - Practice negotiation skills
-5. **Explain Tech to Non-Technical** - Simplify complex concepts
+- Engineering Manager Interview
+- Business Presentation
+- Casual Coffee Chat
+- Client Negotiation
+- Explain Tech to Non-Technical
+- ...and more!
 
-## Troubleshooting
+## 🔧 Troubleshooting
 
 ### Database Connection Issues
 ```bash
-# Check if containers are running
-docker compose ps
-
-# View logs
+docker compose ps  # Check if running
 docker compose logs postgres
-docker compose logs redis
-
-# Restart services
 docker compose restart
 ```
 
 ### Ollama Not Responding
 ```bash
-# Check if Ollama is running
-curl http://localhost:11434/api/tags
-
-# Start if needed
-ollama serve
+curl http://localhost:11434/api/tags  # Check status
+ollama serve  # Start if needed
 ```
-
-### Microphone Issues
-1. Check browser permissions
-2. Ensure HTTPS or localhost
-3. Refresh and allow access
 
 ### Whisper Issues
-
-**Error: "Transcription failed" or 500 error**
 ```bash
-# 1. Check if whisper is installed
-which whisper-cli  # or: which whisper
+# Test whisper
+echo "Hello" | whisper-cli -m models/ggml-base.bin -f -
 
-# 2. Verify the model file exists
-ls -la models/ggml-base.bin
-
-# 3. Test whisper manually
-echo "Hello world" | whisper-cli -m models/ggml-base.bin -f -
-
-# 4. Check your .env.local has correct paths:
-# - WHISPER_MODEL must be FULL path to .bin file
-# - WHISPER_EXECUTABLE_PATH must be result of 'which whisper-cli'
+# Verify paths in .env.local
 ```
 
-**Model file not found**
-```bash
-# Download the model
-curl -L -o models/ggml-base.bin \
-  https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin
-```
+See full troubleshooting guide in the [complete README](#troubleshooting).
 
-**Supported audio formats**: WAV, MP3, OGG, FLAC (not WebM)
+## 💻 Tech Stack
 
-## System Requirements
+- **Frontend**: Next.js 15, React 19, TypeScript, Tailwind CSS
+- **AI SDK**: Vercel AI SDK
+- **AI Model**: Ollama (llama3.1:8b)
+- **Speech**: Whisper (speech-to-text), Web Speech API (text-to-speech)
+- **Database**: PostgreSQL (Drizzle ORM)
+- **Cache**: Redis
+- **Auth**: NextAuth.js
+- **UI**: shadcn/ui
+
+## 🤝 Contributing
+
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+### Quick Contribution Guide
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+This project builds upon:
+- [Vercel AI Chatbot](https://github.com/vercel/ai-chatbot) - Original template (Apache 2.0 License)
+- [Vercel AI SDK](https://sdk.vercel.ai/) - AI streaming and tools
+
+## 🙏 Acknowledgments
+
+- Vercel team for the amazing AI Chatbot template
+- Ollama team for local AI capabilities
+- OpenAI for Whisper
+- All contributors to this project
+
+## 🔗 Links
+
+- [GitHub Repository](https://github.com/Julianbourdes/ai-language-coach)
+- [Report a Bug](https://github.com/Julianbourdes/ai-language-coach/issues)
+- [Request a Feature](https://github.com/Julianbourdes/ai-language-coach/issues)
+
+## 📊 System Requirements
 
 - **RAM**: 16GB recommended (8GB minimum)
 - **Disk**: ~10GB for models
 - **Browser**: Chrome, Edge, Safari (with microphone access)
-- **OS**: macOS, Linux, Windows (with WSL2 for best experience)
+- **OS**: macOS, Linux, Windows (WSL2 recommended)
 
 ### Whisper Model Sizes
 
@@ -266,8 +256,8 @@ curl -L -o models/ggml-base.bin \
 | medium | 1.5 GB | ~5 GB | Slow | High | High accuracy |
 | large | 3 GB | ~10 GB | Slowest | Best | Maximum accuracy |
 
-Download models from: https://huggingface.co/ggerganov/whisper.cpp/tree/main
+---
 
-## License
+Made with ❤️ by [Julian Bourdes](https://github.com/Julianbourdes)
 
-MIT
+Built on [Vercel AI Chatbot](https://github.com/vercel/ai-chatbot)
