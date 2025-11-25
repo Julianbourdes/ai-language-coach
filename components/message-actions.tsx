@@ -3,10 +3,11 @@ import { memo } from "react";
 import { toast } from "sonner";
 import { useSWRConfig } from "swr";
 import { useCopyToClipboard } from "usehooks-ts";
-import type { Vote } from "@/lib/db/schema";
+import type { Vote, TargetLanguage } from "@/lib/db/schema";
 import type { ChatMessage } from "@/lib/types";
 import { Action, Actions } from "./elements/actions";
 import { CopyIcon, PencilEditIcon, ThumbDownIcon, ThumbUpIcon } from "./icons";
+import { TTSButton } from "./tts-button";
 
 export function PureMessageActions({
   chatId,
@@ -14,12 +15,14 @@ export function PureMessageActions({
   vote,
   isLoading,
   setMode,
+  targetLanguage,
 }: {
   chatId: string;
   message: ChatMessage;
   vote: Vote | undefined;
   isLoading: boolean;
   setMode?: (mode: "view" | "edit") => void;
+  targetLanguage?: TargetLanguage | null;
 }) {
   const { mutate } = useSWRConfig();
   const [_, copyToClipboard] = useCopyToClipboard();
@@ -170,6 +173,20 @@ export function PureMessageActions({
       >
         <ThumbDownIcon />
       </Action>
+
+      {/* TTS Button for Language Coach mode */}
+      {targetLanguage && textFromParts && (
+        <Action
+          asChild
+          tooltip="Read aloud"
+        >
+          <TTSButton
+            text={textFromParts}
+            language={targetLanguage}
+            size="icon"
+          />
+        </Action>
+      )}
     </Actions>
   );
 }
@@ -181,6 +198,9 @@ export const MessageActions = memo(
       return false;
     }
     if (prevProps.isLoading !== nextProps.isLoading) {
+      return false;
+    }
+    if (prevProps.targetLanguage !== nextProps.targetLanguage) {
       return false;
     }
 
