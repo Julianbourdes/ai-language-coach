@@ -23,7 +23,7 @@ export function LanguageSelector({
   onChange,
   disabled = false,
 }: LanguageSelectorProps) {
-  const currentLanguage = LANGUAGES[value];
+  console.log('[LanguageSelector] Rendering with value:', value);
 
   return (
     <DropdownMenu>
@@ -34,8 +34,8 @@ export function LanguageSelector({
           className="gap-2"
           disabled={disabled}
         >
-          <span className="text-lg">{currentLanguage.flag}</span>
-          <span className="hidden sm:inline">{currentLanguage.name}</span>
+          <span className="text-lg">{LANGUAGES[value].flag}</span>
+          <span className="hidden sm:inline">{LANGUAGES[value].name}</span>
           <Languages className="h-4 w-4 opacity-50" />
         </Button>
       </DropdownMenuTrigger>
@@ -45,7 +45,10 @@ export function LanguageSelector({
         {(Object.keys(LANGUAGES) as TargetLanguage[]).map((lang) => (
           <DropdownMenuItem
             key={lang}
-            onClick={() => onChange(lang)}
+            onClick={() => {
+              console.log('[LanguageSelector] Changing language to:', lang);
+              onChange(lang);
+            }}
             className={value === lang ? "bg-accent" : ""}
           >
             <span className="mr-2 text-lg">{LANGUAGES[lang].flag}</span>

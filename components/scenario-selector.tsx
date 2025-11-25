@@ -39,6 +39,8 @@ export function ScenarioSelector({
   onChange,
   disabled = false,
 }: ScenarioSelectorProps) {
+  console.log('[ScenarioSelector] Rendering with value:', value?.title || 'Free Conversation');
+
   const [isOpen, setIsOpen] = useState(false);
   const [scenarios, setScenarios] = useState<ChatScenarioData[]>([]);
   const [loading, setLoading] = useState(false);
@@ -63,52 +65,30 @@ export function ScenarioSelector({
   }
 
   function handleSelect(scenario: ChatScenarioData) {
+    console.log('[ScenarioSelector] Selecting scenario:', scenario.title);
     onChange(scenario);
     setIsOpen(false);
   }
 
   function handleClear() {
+    console.log('[ScenarioSelector] Clearing scenario');
     onChange(null);
   }
 
   return (
     <>
-      {value ? (
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-2"
-            onClick={() => setIsOpen(true)}
-            disabled={disabled}
-          >
-            <span className="text-lg">{value.icon}</span>
-            <span className="hidden sm:inline max-w-[150px] truncate">
-              {value.title}
-            </span>
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={handleClear}
-            disabled={disabled}
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-      ) : (
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-2"
-          onClick={() => setIsOpen(true)}
-          disabled={disabled}
-        >
-          <BookOpen className="h-4 w-4" />
-          <span className="hidden sm:inline">Choose Scenario</span>
-        </Button>
-      )}
+      <Button
+        variant="outline"
+        size="sm"
+        className="gap-2"
+        onClick={() => setIsOpen(true)}
+        disabled={disabled}
+      >
+        <span className="text-lg">{value ? value.icon : "💬"}</span>
+        <span className="hidden sm:inline max-w-[150px] truncate">
+          {value ? value.title : "Free Conversation"}
+        </span>
+      </Button>
 
       <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
         <AlertDialogContent className="max-w-3xl max-h-[80vh]">

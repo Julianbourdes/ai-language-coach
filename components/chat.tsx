@@ -82,6 +82,8 @@ export function Chat({
   const targetLanguageRef = useRef(targetLanguage);
   const scenarioDataRef = useRef(scenarioData);
 
+  console.log('[Chat] Current state - targetLanguage:', targetLanguage, 'scenarioData:', scenarioData?.title || 'Free Conversation');
+
   // Language Coach mode is always active
   const isLanguageCoachMode = true;
 
@@ -90,10 +92,12 @@ export function Chat({
   }, [currentModelId]);
 
   useEffect(() => {
+    console.log('[Chat] targetLanguage changed to:', targetLanguage);
     targetLanguageRef.current = targetLanguage;
   }, [targetLanguage]);
 
   useEffect(() => {
+    console.log('[Chat] scenarioData changed to:', scenarioData?.title || 'Free Conversation');
     scenarioDataRef.current = scenarioData;
   }, [scenarioData]);
 
@@ -268,12 +272,18 @@ export function Chat({
             <div className="flex items-center gap-2">
               <LanguageSelector
                 value={targetLanguage}
-                onChange={setTargetLanguage}
+                onChange={(lang) => {
+                  console.log('[Chat] setTargetLanguage called with:', lang);
+                  setTargetLanguage(lang);
+                }}
                 disabled={messages.length > 0} // Can't change language once conversation started
               />
               <ScenarioSelector
                 value={scenarioData}
-                onChange={setScenarioData}
+                onChange={(scenario) => {
+                  console.log('[Chat] setScenarioData called with:', scenario?.title || 'Free Conversation');
+                  setScenarioData(scenario);
+                }}
                 disabled={messages.length > 0} // Can't change scenario once conversation started
               />
             </div>

@@ -532,6 +532,34 @@ export async function updateChatLastContextById({
   }
 }
 
+export async function updateChatLanguageCoachSettings({
+  chatId,
+  targetLanguage,
+  scenarioId,
+  scenarioData,
+}: {
+  chatId: string;
+  targetLanguage?: TargetLanguage;
+  scenarioId?: string | null;
+  scenarioData?: ChatScenarioData | null;
+}) {
+  try {
+    return await db
+      .update(chat)
+      .set({
+        ...(targetLanguage !== undefined && { targetLanguage }),
+        ...(scenarioId !== undefined && { scenarioId }),
+        ...(scenarioData !== undefined && { scenarioData }),
+      })
+      .where(eq(chat.id, chatId));
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to update chat language coach settings"
+    );
+  }
+}
+
 export async function getMessageCountByUserId({
   id,
   differenceInHours,

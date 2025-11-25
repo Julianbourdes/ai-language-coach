@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { memo, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import { useWindowSize } from "usehooks-ts";
 import { SidebarToggle } from "@/components/sidebar-toggle";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { PlusIcon, VercelIcon } from "./icons";
 import { useSidebar } from "./ui/sidebar";
 import { VisibilitySelector, type VisibilityType } from "./visibility-selector";
 
-function PureChatHeader({
+export function ChatHeader({
   chatId,
   selectedVisibilityType,
   isReadonly,
@@ -59,11 +59,3 @@ function PureChatHeader({
     </header>
   );
 }
-
-export const ChatHeader = memo(PureChatHeader, (prevProps, nextProps) => {
-  return (
-    prevProps.chatId === nextProps.chatId &&
-    prevProps.selectedVisibilityType === nextProps.selectedVisibilityType &&
-    prevProps.isReadonly === nextProps.isReadonly
-  );
-});
